@@ -1,0 +1,23 @@
+{
+  "name": "commerce-cms-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Backend del panel CMS (Commerce CMS) - autenticación, settings y productos sobre PostgreSQL",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "db:init": "node init-db.mjs",
+    "dev": "node --watch server.mjs",
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  }
+}
