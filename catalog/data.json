@@ -8,7 +8,7 @@
   },
   "products": [
     { "id": 1, "title": "Auriculares Pro", "price": 89, "category": "Audio", "description": "Sonido envolvente con cancelación de ruido activa." },
-    { "id": 2, "title": "Smartwatch Series X", "price": 199, "category": "Wearables", "description": "Monitor de salud y notificaciones en tu muñeca." },
+    { "id": 2, "title": "Smartwatch Series X", "price": 199, "category": "Vestibles", "description": "Monitor de salud y notificaciones en tu muñeca." },
     { "id": 3, "title": "Teclado Mecánico", "price": 59, "category": "Accesorios", "description": "Switches táctiles y retroiluminación RGB." },
     { "id": 4, "title": "Mouse Gamer", "price": 39, "category": "Accesorios", "description": "16.000 DPI, 8 botones programables." },
     { "id": 5, "title": "Monitor 27\" 4K", "price": 349, "category": "Pantallas", "description": "Colores precisos ideales para diseño y gaming." },

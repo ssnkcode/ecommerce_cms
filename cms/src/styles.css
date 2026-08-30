@@ -1224,6 +1224,51 @@ button {
   margin-top: 0.2rem;
 }
 
+.image-url-mode select {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+
+.image-url-helper {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.82em;
+  color: var(--muted);
+}
+
+.url-status {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.85em;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+}
+
+.url-status.is-busy {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.url-status.is-info {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--text);
+}
+
+.url-status.is-warn {
+  background: color-mix(in srgb, #e6a23c 16%, transparent);
+  color: #8a5a00;
+}
+
+.url-status.is-error {
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+  color: #a11e2a;
+}
+
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));

@@ -1057,7 +1057,7 @@ svg {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin: 0.9rem 0 0.2rem;
+  margin: 0.9rem 20px 0.2rem;
 }
 
 .cat-share-label {

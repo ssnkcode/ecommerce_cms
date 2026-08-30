@@ -75,7 +75,7 @@ INSERT INTO cms_settings (key, value) VALUES
     ('whatsapp',         '"543541682310"'),
     ('whatsapp_footer',  '"SOLO SE RESERVA CON SEÑA DEL 50% PREVIA!\nSaludos desde polirrubroSSNK!!!"'),
     -- No mapeados por KEY_MAP (se guardan con el nombre JS que envía el CMS)
-    ('categories',       '["Audio", "Wearables", "Accesorios", "Pantallas"]'),
+    ('categories',       '["Audio", "Vestibles", "Accesorios", "Pantallas"]'),
     ('pdfBusinessName',  '""'),
     ('pdfListMode',      '"compact"'),
     ('pdfShowImages',    'true'),
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS products (
     id          BIGSERIAL       PRIMARY KEY,
     title       TEXT            NOT NULL,
     description TEXT            NOT NULL DEFAULT '',
-    price       NUMERIC(10, 2)  NOT NULL CHECK (price >= 0),
+    price       NUMERIC(16, 2)  NOT NULL CHECK (price >= 0),
     category    TEXT            NOT NULL DEFAULT '',
     image       TEXT            NOT NULL DEFAULT '',
     gallery     JSONB           NOT NULL DEFAULT '[]'::jsonb,
@@ -202,7 +202,7 @@ FROM (
             'Smartwatch Series X',
             'Monitor de salud y notificaciones en tu muñeca.',
             199,
-            'Wearables',
+            'Vestibles',
             'Pantalla AMOLED 1.4"\nResistente al agua 5 ATM\nGPS integrado\nBatería 14 días\nSensor de frecuencia cardíaca'
         ),
         (

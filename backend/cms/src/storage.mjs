@@ -31,7 +31,7 @@ const DEFAULT_SETTINGS = {
   whatsapp_footer: 'SOLO SE RESERVA CON SEÑA DEL 50% PREVIA!\nSaludos desde polirrubroSSNK!!!',
 }
 
-const DEFAULT_CATEGORIES = '["Audio", "Wearables", "Accesorios", "Pantallas"]'
+const DEFAULT_CATEGORIES = '["Audio", "Vestibles", "Accesorios", "Pantallas"]'
 
 const DEFAULT_PRODUCTS = [
   {
@@ -45,7 +45,7 @@ const DEFAULT_PRODUCTS = [
     title: 'Smartwatch Series X',
     description: 'Monitor de salud y notificaciones en tu muñeca.',
     price: 199,
-    category: 'Wearables',
+    category: 'Vestibles',
     specs: 'Pantalla AMOLED 1.4"\nResistente al agua 5 ATM\nGPS integrado\nBatería 14 días\nSensor de frecuencia cardíaca',
   },
   {

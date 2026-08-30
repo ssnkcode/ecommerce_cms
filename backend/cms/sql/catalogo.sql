@@ -70,7 +70,7 @@ INSERT INTO products (title, description, price, category, specs) VALUES
         'Smartwatch Series X',
         'Monitor de salud y notificaciones en tu muñeca.',
         199,
-        'Wearables',
+        'Vestibles',
         'Pantalla AMOLED 1.4"\nResistente al agua 5 ATM\nGPS integrado\nBatería 14 días\nSensor de frecuencia cardíaca'
     ),
     (

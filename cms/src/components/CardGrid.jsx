@@ -5,6 +5,51 @@ import { useFocusTrap } from '../../../utils/a11y.jsx'
 
 const emptyProduct = { title: '', category: '', price: '', description: '', specs: '', image: '', gallery: [] }
 
+// Convierte el texto del input de precio a número. Soporta separadores de miles
+// con punto (1.200.000) y coma decimal (89,99). Ej: "1.200.000.000" -> 1200000000
+function parsePriceInput(raw) {
+  if (raw == null || raw === '') return 0
+  let s = String(raw).trim()
+  if (!s) return 0
+  const lastComma = s.lastIndexOf(',')
+  const lastDot = s.lastIndexOf('.')
+  // Si hay coma, se la toma como separador decimal y los puntos como miles.
+  if (lastComma > -1) {
+    s = s.replace(/\./g, '').replace(',', '.')
+  } else if (lastDot > -1 && s.indexOf('.') !== s.lastIndexOf('.')) {
+    // Varios puntos y sin coma: todos son separadores de miles.
+    s = s.replace(/\./g, '')
+  }
+  const n = Number(s)
+  return Number.isFinite(n) && n >= 0 ? n : 0
+}
+
+// Umbrales de nitidez para imágenes cargadas por URL (el modal muestra hasta ~500px,
+// así que menos de 800px de ancho tiende a verse borrosa; 1200px+ es lo ideal).
+const MIN_URL_WIDTH = 800
+const IDEAL_URL_WIDTH = 1200
+
+// Lee el ancho/alto real de una imagen por URL sin depender de CORS (solo <img>).
+function detectUrlSize(url) {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
+    img.onerror = () => resolve(null)
+    img.src = url
+  })
+}
+
+// Descarga una imagen por URL y la procesa igual que las subidas por archivo
+// (la comprime y la guarda embebida en base64). Lanza error si CORS lo bloquea.
+async function normalizeUrlImage(url) {
+  const res = await fetch(url, { mode: 'cors' })
+  if (!res.ok) throw new Error('HTTP ' + res.status)
+  const blob = await res.blob()
+  if (!blob.type || !blob.type.startsWith('image/')) throw new Error('No es una imagen')
+  const file = new File([blob], 'gallery-image', { type: blob.type })
+  return compressImageFile(file, { maxSize: 1200, quality: 0.82 })
+}
+
 function ProductCard({ product, onEdit, onRemove }) {
   return (
     <div className="card">
@@ -37,11 +82,24 @@ function ProductCard({ product, onEdit, onRemove }) {
 }
 
 function ProductForm({ initial, categories, onSave, onCancel }) {
-  const [form, setForm] = useState(initial)
+  const initPrice = (value) => {
+    const n = Number(value)
+    return Number.isFinite(n) ? n.toLocaleString('es-AR') : value || ''
+  }
+  const setPrice = (e) => {
+    // Se aceptan dígitos, puntos de miles y una coma decimal.
+    const cleaned = e.target.value.replace(/[^\d.,]/g, '')
+    setForm((f) => ({ ...f, price: cleaned }))
+  }
+  const [form, setForm] = useState(() => ({ ...initial, price: initPrice(initial.price) }))
   const [drag, setDrag] = useState(false)
   const [galleryDrag, setGalleryDrag] = useState(false)
   const [urlInput, setUrlInput] = useState(initial.image && !initial.image.startsWith('data:') ? initial.image : '')
   const [galleryUrlInput, setGalleryUrlInput] = useState('')
+  const [urlMode, setUrlMode] = useState('ambas')
+  const [urlStatus, setUrlStatus] = useState(null)
+  const [urlBusy, setUrlBusy] = useState(false)
+  const urlBusyRef = useRef(false)
   const fileInputRef = useRef(null)
   const galleryInputRef = useRef(null)
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
@@ -74,6 +132,55 @@ function ProductForm({ initial, categories, onSave, onCancel }) {
     setForm((f) => ({ ...f, gallery: (f.gallery || []).filter((_, i) => i !== idx) }))
   }
 
+  const keepUrl = (url) => {
+    addGalleryItem(url)
+    setGalleryUrlInput('')
+    setUrlStatus(null)
+  }
+
+  const addGalleryByUrl = async (url) => {
+    if (!url) return
+    if (urlBusyRef.current) return
+    if (urlMode === 'directa') {
+      keepUrl(url)
+      return
+    }
+    urlBusyRef.current = true
+    // Detector de resolución (solo en modo "ambas")
+    if (urlMode === 'ambas') {
+      const size = await detectUrlSize(url)
+      if (size && size.width < MIN_URL_WIDTH) {
+        setUrlStatus({
+          type: 'warn',
+          text: `La imagen de la URL mide ${size.width}px de ancho: se verá borrosa. Pegá una versión de al menos ${IDEAL_URL_WIDTH}px.`,
+        })
+      } else {
+        setUrlStatus({
+          type: 'info',
+          text: size ? `Imagen de ${size.width}px de ancho: buena resolución.` : 'No se pudo verificar el tamaño de la imagen.',
+        })
+      }
+    }
+    // Intenta descargar y normalizar (guardar embebida)
+    setUrlBusy(true)
+    try {
+      const src = await normalizeUrlImage(url)
+      addGalleryItem(src)
+      setGalleryUrlInput('')
+    } catch (err) {
+      addGalleryItem(url)
+      setGalleryUrlInput('')
+      setUrlStatus((s) =>
+        s && s.type === 'warn'
+          ? s
+          : { type: 'error', text: 'No se pudo descargar la imagen (la bloquea CORS). Se guardó la URL directa.' }
+      )
+    } finally {
+      urlBusyRef.current = false
+      setUrlBusy(false)
+    }
+  }
+
   const submit = (e) => {
     e.preventDefault()
     onSave(form)
@@ -97,7 +204,7 @@ function ProductForm({ initial, categories, onSave, onCancel }) {
       </label>
       <label>
         Precio
-        <input type="number" min="0" step="0.01" value={form.price} onChange={set('price')} required />
+        <input type="text" inputMode="numeric" placeholder="0" value={form.price} onChange={setPrice} required />
       </label>
       <label>
         Descripción
@@ -218,30 +325,50 @@ function ProductForm({ initial, categories, onSave, onCancel }) {
 
         <label className="image-url-field">
           O agregá por URL y presioná Enter:
+        </label>
+        <label className="image-url-mode">
+          <select
+            value={urlMode}
+            onChange={(e) => setUrlMode(e.target.value)}
+            disabled={urlBusy}
+            aria-label="Cómo cargar la imagen de la URL"
+          >
+            <option value="ambas">Las dos: verificar resolución y normalizar (recomendado)</option>
+            <option value="normalizar">Descargar y normalizar (guardar embebida)</option>
+            <option value="directa">Guardar la URL directa (solo si es de alta resolución)</option>
+          </select>
+        </label>
+        <div className="image-url-field">
           <input
             type="text"
             value={galleryUrlInput}
-            placeholder="https://ejemplo.com/foto1.jpg"
+            placeholder="https://ejemplo.com/foto-grande.jpg"
+            readOnly={urlBusy}
             onChange={(e) => setGalleryUrlInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault()
                 const url = galleryUrlInput.trim()
-                if (url) {
-                  addGalleryItem(url)
-                  setGalleryUrlInput('')
-                }
+                if (url) addGalleryByUrl(url)
               }
             }}
             onBlur={() => {
               const url = galleryUrlInput.trim()
               if (url) {
-                addGalleryItem(url)
-                setGalleryUrlInput('')
+                addGalleryByUrl(url)
               }
             }}
           />
-        </label>
+          {urlMode !== 'directa' && (
+            <span className="image-url-helper">
+              La imagen se descargará, se optimizará y se guardará embebida (ya no dependerá de la URL).
+            </span>
+          )}
+          {urlBusy && <span className="url-status is-busy">Descargando imagen…</span>}
+          {urlStatus && !urlBusy && (
+            <span className={`url-status is-${urlStatus.type}`}>{urlStatus.text}</span>
+          )}
+        </div>
       </div>
 
       <label>
@@ -533,7 +660,7 @@ function CardGrid({
   }
 
   const handleSave = (data) => {
-    const payload = { ...data, price: Number(data.price) }
+    const payload = { ...data, price: parsePriceInput(data.price) }
     if (mode === 'add') addProduct(payload)
     else updateProduct(editingProduct.id, payload)
     setMode(null)

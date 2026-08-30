@@ -232,12 +232,9 @@ export default function App() {
         siteName={settings.siteName}
         logo={settings.logo}
         theme={theme}
-        session={session}
         onToggleTheme={toggleTheme}
         onExport={() => setExportChoice(true)}
         onPreview={() => setPreviewOpen(true)}
-        onLogin={() => setShowLogin(true)}
-        onLogout={doLogout}
       />
       <main id="contenido-principal" tabIndex={-1}>
         <Hero settings={settings} updateSettings={saveDataActions.updateSettings} />

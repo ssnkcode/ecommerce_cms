@@ -18,7 +18,7 @@ export const defaultSettings = {
   productsTitle: 'Nuestros productos',
   heroImage: '',
   heroImageSize: 420,
-  categories: ['Audio', 'Wearables', 'Accesorios', 'Pantallas'],
+  categories: ['Audio', 'Vestibles', 'Accesorios', 'Pantallas'],
   pdfBusinessName: '',
   pdfListMode: 'compact',
   pdfShowImages: true,
@@ -28,7 +28,7 @@ export const defaultSettings = {
 
 export const defaultProducts = [
   { id: 1, title: 'Auriculares Pro', price: 89, category: 'Audio', description: 'Sonido envolvente con cancelación de ruido activa.', specs: 'Cancelación de ruido activa\nBluetooth 5.3\nBatería 40 h\nCarga USB-C\nPeso 250 g' },
-  { id: 2, title: 'Smartwatch Series X', price: 199, category: 'Wearables', description: 'Monitor de salud y notificaciones en tu muñeca.', specs: 'Pantalla AMOLED 1.4"\nResistente al agua 5 ATM\nGPS integrado\nBatería 14 días\nSensor de frecuencia cardíaca' },
+  { id: 2, title: 'Smartwatch Series X', price: 199, category: 'Vestibles', description: 'Monitor de salud y notificaciones en tu muñeca.', specs: 'Pantalla AMOLED 1.4"\nResistente al agua 5 ATM\nGPS integrado\nBatería 14 días\nSensor de frecuencia cardíaca' },
   { id: 3, title: 'Teclado Mecánico', price: 59, category: 'Accesorios', description: 'Switches táctiles y retroiluminación RGB.', specs: 'Switches mecánicos rojos\nRetroiluminación RGB\nLayout 60%\nInalámbrico 2.4GHz\nBatería 2000 mAh' },
   { id: 4, title: 'Mouse Gamer', price: 39, category: 'Accesorios', description: '16.000 DPI, 8 botones programables.', specs: 'Sensor 16.000 DPI\n8 botones programables\nIluminación RGB\nCable paracord\nPeso 65 g' },
   { id: 5, title: 'Monitor 27" 4K', price: 349, category: 'Pantallas', description: 'Colores precisos ideales para diseño y gaming.', specs: 'Panel IPS UHD 4K\nTasa de refresco 60Hz\nCobertura 98% DCI-P3\nHDR10\n2x HDMI, 1x DisplayPort' },

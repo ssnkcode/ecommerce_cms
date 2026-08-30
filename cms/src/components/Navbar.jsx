@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
-import { IconCart, IconDownload, IconEye, IconSun, IconMoon, IconMenu, IconClose, IconLock } from '../../../utils/icons.jsx'
+import { IconCart, IconDownload, IconEye, IconSun, IconMoon, IconMenu, IconClose } from '../../../utils/icons.jsx'
 import { useFocusTrap } from '../../../utils/a11y.jsx'
 
 function NavMenuPanel({ onClose, children }) {
@@ -31,10 +31,8 @@ function NavMenuPanel({ onClose, children }) {
   )
 }
 
-function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview, session, onLogin, onLogout }) {
+function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview }) {
   const [open, setOpen] = useState(false)
-  const checking = session === 'checking'
-  const logged = !checking && session && session.username
 
   return (
     <>
@@ -72,18 +70,6 @@ function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview, ses
             {theme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
             <span>{theme === 'dark' ? 'Claro' : 'Oscuro'}</span>
           </button>
-          {!checking && !logged && (
-            <button className="btn-preview-nav nav-session" onClick={onLogin} title="Iniciar sesión para sincronizar con el backend">
-              <IconLock size={16} />
-              <span>Iniciar sesión</span>
-            </button>
-          )}
-          {logged && (
-            <div className="nav-session nav-session-ok" title="Sincronizado con el backend">
-              <span className="nav-session-user">{session.username}</span>
-              <button className="nav-session-out" onClick={onLogout}>Salir</button>
-            </div>
-          )}
         </div>
 
         <button
@@ -134,30 +120,6 @@ function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview, ses
               <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
               {theme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
             </button>
-            {!checking && !logged && (
-              <button
-                className="nav-menu-item"
-                onClick={() => {
-                  setOpen(false)
-                  onLogin()
-                }}
-              >
-                <span>Iniciar sesión</span>
-                <IconLock size={18} />
-              </button>
-            )}
-            {logged && (
-              <button
-                className="nav-menu-item"
-                onClick={() => {
-                  setOpen(false)
-                  onLogout()
-                }}
-              >
-                <span>Cerrar sesión ({session.username})</span>
-                <IconLock size={18} />
-              </button>
-            )}
           </nav>
         </NavMenuPanel>
       )}
