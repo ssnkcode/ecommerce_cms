@@ -149,7 +149,7 @@ COMMENT ON TABLE cms_login_attempts IS
 --     galería (JSONB de URLs), precios y especificaciones.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS products (
-    id          SERIAL PRIMARY KEY,
+    id          BIGSERIAL       PRIMARY KEY,
     title       TEXT            NOT NULL,
     description TEXT            NOT NULL DEFAULT '',
     price       NUMERIC(10, 2)  NOT NULL CHECK (price >= 0),

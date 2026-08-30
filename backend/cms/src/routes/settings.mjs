@@ -6,7 +6,7 @@ const router = Router()
 
 router.get('/', async (req, res, next) => {
   try {
-    res.json(settingsFromRows(getSettingsRows()))
+    res.json(settingsFromRows(await getSettingsRows()))
   } catch (err) {
     next(err)
   }
@@ -21,8 +21,8 @@ router.put('/', async (req, res, next) => {
       const dbKey = KEY_MAP[jsKey] || String(jsKey)
       pairs.push([dbKey, value])
     }
-    upsertSettings(pairs)
-    res.json(settingsFromRows(getSettingsRows()))
+    await upsertSettings(pairs)
+    res.json(settingsFromRows(await getSettingsRows()))
   } catch (err) {
     next(err)
   }

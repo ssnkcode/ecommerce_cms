@@ -1,12 +1,15 @@
 import 'dotenv/config'
-import { readFileSync, existsSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import pg from 'pg'
-import bcrypt from 'bcryptjs'
+import { spawnSync } from 'node:child_process'
 
-const { Client } = pg
 const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// Script canónico: TODAS las tablas (cms_settings, cms_admins, cms_sessions,
+// cms_login_attempts, products) + trigger + seeds (settings, admin, productos).
+// Vive en db/ y está pensado para ejecutarse con psql (usa \getenv / \connect).
+const SCRIPT = join(__dirname, '..', '..', 'db', 'base_completa.sql')
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) {
@@ -15,69 +18,75 @@ if (!databaseUrl) {
 }
 
 const url = new URL(databaseUrl)
-const dbName = url.pathname.replace(/^\//, '')
+
+// El script canónico decide la base con \getenv DBNAME (default commerce_cms).
+// El env DBNAME la sobreescribe (útil para testear instalación limpia).
+const dbName = process.env.DBNAME || url.pathname.replace(/^\//, '')
+const serviceHost = url.hostname || 'localhost'
+const servicePort = url.port || '5432'
+const serviceUser = url.username || 'postgres'
+const servicePassword = decodeURIComponent(url.password || '')
 const adminUser = process.env.ADMIN_USER || 'admin'
 const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'
 
-async function ensureDatabase() {
-  const adminUrl = new URL(url)
-  adminUrl.pathname = '/postgres'
-  const client = new Client({ connectionString: adminUrl.toString() })
-  await client.connect()
-  try {
-    const { rows } = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [dbName])
-    if (rows.length === 0) {
-      await client.query(`CREATE DATABASE "${dbName}"`)
-      console.log(`Base de datos creada: ${dbName}`)
-    } else {
-      console.log(`La base ${dbName} ya existe.`)
-    }
-  } finally {
-    await client.end()
+// Localiza el ejecutable de psql: primero la variable PG_BIN, después rutas de
+// instalación habituales en Windows, y al final psql en el PATH.
+function findPsql() {
+  if (process.env.PG_BIN) {
+    if (existsSync(process.env.PG_BIN)) return process.env.PG_BIN
   }
-}
-
-async function runFile(client, file) {
-  const path = join(__dirname, 'sql', file)
-  if (!existsSync(path)) throw new Error(`No existe el archivo SQL: ${path}`)
-  const sql = readFileSync(path, 'utf8')
-  console.log(`  - Ejecutando ${file} ...`)
-  await client.query(sql)
-  console.log(`    -> ${file} OK`)
-}
-
-async function ensureAdmin(client) {
-  const { rows } = await client.query('SELECT 1 FROM cms_admins WHERE username = $1', [adminUser])
-  if (rows.length > 0) {
-    console.log(`El admin "${adminUser}" ya existe.`)
-    return
+  const candidates = []
+  const pgRoot = process.env.PGROOT
+  if (pgRoot) candidates.push(join(pgRoot, 'bin', 'psql.exe'))
+  candidates.push('C:\\Program Files\\PostgreSQL\\18\\bin\\psql.exe')
+  candidates.push('C:\\Program Files\\PostgreSQL\\17\\bin\\psql.exe')
+  candidates.push('C:\\Program Files\\PostgreSQL\\16\\bin\\psql.exe')
+  candidates.push('C:\\Program Files\\PostgreSQL\\15\\bin\\psql.exe')
+  for (const c of candidates) {
+    if (c && existsSync(c)) return c
   }
-  const hash = await bcrypt.hash(adminPassword, 10)
-  await client.query('INSERT INTO cms_admins (username, password_hash) VALUES ($1, $2)', [adminUser, hash])
-  console.log(`Admin creado: "${adminUser}" (contraseña desde .env)`)
+  return 'psql'
 }
 
-async function main() {
+function main() {
+  if (!existsSync(SCRIPT)) {
+    console.error(`No existe el script canónico: ${SCRIPT}`)
+    process.exit(1)
+  }
+
+  const psql = findPsql()
   console.log('Inicializando base de datos del Commerce CMS ...')
-  console.log(`  Servidor : ${url.host}`)
-  console.log(`  Base     : ${dbName}`)
+  console.log(`  Servidor : ${serviceHost}:${servicePort}`)
+  console.log(`  Base     : ${dbName}  (usa DBNAME, ver db/base_completa.sql)`)
+  console.log(`  Admin    : ${adminUser} / ${adminPassword}`)
+  console.log(`  Script   : ${SCRIPT}`)
 
-  await ensureDatabase()
-
-  const client = new Client({ connectionString: databaseUrl })
-  await client.connect()
-  try {
-    console.log('  Orden de archivos (una sola base, dos partes):')
-    await runFile(client, 'cms.sql')
-    await runFile(client, 'catalogo.sql')
-    await ensureAdmin(client)
-    console.log('Base de datos lista. Próximo paso: npm run dev')
-  } finally {
-    await client.end()
+  const env = {
+    ...process.env,
+    PGPASSWORD: servicePassword,
+    PGUSER: serviceUser,
+    PGHOST: serviceHost,
+    PGPORT: servicePort,
+    // base_completa.sql lee DBNAME con \getenv para crear/conectar la base.
+    DBNAME: dbName,
   }
+
+  const result = spawnSync(psql, ['-U', serviceUser, '-h', serviceHost, '-p', servicePort, '-v', 'ON_ERROR_STOP=1', '-f', SCRIPT], {
+    env,
+    stdio: 'inherit',
+  })
+
+  if (result.error) {
+    console.error(`No se pudo ejecutar psql (${psql}):`, result.error.message)
+    console.error('Asegurate de que PostgreSQL 18 esté instalado y corriendo, o seteá PG_BIN.')
+    process.exit(1)
+  }
+  if (result.status !== 0) {
+    console.error(`psql finalizó con código ${result.status}.`)
+    process.exit(result.status ?? 1)
+  }
+
+  console.log('Base de datos lista. Próximo paso: npm run dev')
 }
 
-main().catch((err) => {
-  console.error('Error inicializando la base:', err.message)
-  process.exit(1)
-})
+main()

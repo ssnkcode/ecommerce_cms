@@ -13,8 +13,8 @@ cms/
 ├── cms/          # Panel CMS (React + Vite)  -> http://localhost:5178/cms/
 ├── catalog/      # Catálogo público (React)  -> http://localhost:5178/catalog/catalog.html
 ├── utils/        # Lógica compartida (datos, iconos, accesibilidad, formato, cliente API)
-├── backend/      # API Express + capa de almacenamiento (en memoria por ahora)
-├── db/           # Recursos de base de datos
+├── backend/      # API Express + capa de almacenamiento (PostgreSQL)
+├── db/           # Script de base de datos (base_completa.sql, canónico)
 ├── dist/         # Build de producción (se genera con npm run build en cms/)
 └── iniciar-cms.bat  # Lanzador: PostgreSQL + API + Frontend + navegador
 ```
@@ -23,7 +23,7 @@ cms/
 
 - **React 18** + **Vite 5** (frontend CMS y catálogo en un mismo build).
 - **Express 4** + **bcryptjs** (API con autenticación por cookie) — puerto `3001`.
-- **Almacenamiento en memoria** por ahora (`backend/cms/src/storage.mjs`): al reiniciar el proceso vuelve a los datos de ejemplo. Está pensada para reemplazarse por **PostgreSQL** sin tocar las rutas (misma forma de datos).
+- **PostgreSQL** como almacenamiento real (`backend/cms/src/storage.mjs` usa el pool de `db.mjs`): settings, productos, admins, sesiones e intentos de login. Al reiniciar el backend **no se pierde nada**. La forma de los datos que devuelve es la misma que tenía la versión en memoria, así las rutas no cambiaron su contrato.
 - **jsPDF** para la exportación de catálogo a PDF (chunk `a11y`).
 
 ## Funcionalidades
@@ -55,7 +55,7 @@ cms/
 3. El catálogo público consulta primero la API (`GET /api/catalog`, sin login); si no hay backend, usa `localStorage` y, en su defecto, `catalog/data.json`.
 4. "Exportar catálogo" genera `catalog/data.json` para que el catálogo "en frío" (sin datos locales ni backend) muestre los cambios.
 
-> Nota: el almacenamiento del backend es **en memoria** por ahora: al reiniciar `npm run dev` vuelve a los datos de ejemplo. Cuando se conecte PostgreSQL, solo se reemplaza el interior de `backend/cms/src/storage.mjs`.
+> Nota: el almacenamiento del backend es **PostgreSQL real**. En `backend/cms/src/storage.mjs` se usa el pool de `db.mjs` (settings, productos, admins, sesiones e intentos de login). Para crear/actualizar la base se corre `npm run db:init`, que ejecuta el script canónico `db/base_completa.sql` vía psql.
 
 ## Formato de textos
 
@@ -76,7 +76,8 @@ cd cms && npm run build        # genera F:\upc\cms\dist
 
 # Backend
 cd backend/cms
-npm run dev                    # API en http://localhost:3001  (usuarios: admin/admin123)
+npm run db:init                 # Crea/actualiza la base (db/base_completa.sql) vía psql
+npm run dev                     # API en http://localhost:3001  (usuarios: admin/admin123)
 ```
 
 O simplemente ejecutar `iniciar-cms.bat` para levantar todo (PostgreSQL, API, frontend y abrir el navegador).

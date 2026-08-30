@@ -27,7 +27,7 @@ export { getAdminByUsername }
 
 export async function requireAuth(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME]
-  const user = sessionUser(token)
+  const user = await sessionUser(token)
   if (!user) {
     return res.status(401).json({ error: 'No autorizado. Iniciá sesión en el panel.' })
   }

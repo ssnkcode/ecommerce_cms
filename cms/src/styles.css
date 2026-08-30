@@ -587,7 +587,7 @@ button {
 }
 
 .hero-text h1 {
-  color: #000;
+  color: #a19f9fff;
   font-size: clamp(1.6rem, 7vw, 3rem);
   line-height: 1.1;
   margin-bottom: 1rem;

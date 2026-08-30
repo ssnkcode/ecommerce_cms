@@ -28,11 +28,15 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'commerce-cms-backend', time: new Date().toISOString() })
 })
 
-app.get('/api/catalog', (req, res) => {
-  res.json({ settings: settingsFromRows(getSettingsRows()), products: listProducts().map(productToJson) })
+app.get('/api/catalog', async (req, res, next) => {
+  try {
+    res.json({ settings: settingsFromRows(await getSettingsRows()), products: (await listProducts()).map(productToJson) })
+  } catch (err) {
+    next(err)
+  }
 })
 
-app.put('/api/catalog', requireAuth, (req, res, next) => {
+app.put('/api/catalog', requireAuth, async (req, res, next) => {
   try {
     const body = req.body && typeof req.body === 'object' ? req.body : {}
     const pairs = []
@@ -42,10 +46,10 @@ app.put('/api/catalog', requireAuth, (req, res, next) => {
       const dbKey = KEY_MAP[jsKey] || String(jsKey)
       pairs.push([dbKey, value])
     }
-    upsertSettings(pairs)
+    await upsertSettings(pairs)
     const prodList = Array.isArray(body.products) ? body.products : []
-    replaceProducts(prodList)
-    res.json({ settings: settingsFromRows(getSettingsRows()), products: listProducts().map(productToJson) })
+    await replaceProducts(prodList)
+    res.json({ settings: settingsFromRows(await getSettingsRows()), products: (await listProducts()).map(productToJson) })
   } catch (err) {
     next(err)
   }

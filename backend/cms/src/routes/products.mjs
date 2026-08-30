@@ -24,7 +24,7 @@ function validateProduct(body) {
 
 router.get('/', async (req, res, next) => {
   try {
-    res.json({ products: listProducts().map(productToJson) })
+    res.json({ products: (await listProducts()).map(productToJson) })
   } catch (err) {
     next(err)
   }
@@ -32,7 +32,7 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id(\\d+)', async (req, res, next) => {
   try {
-    const row = getProductById(Number(req.params.id))
+    const row = await getProductById(Number(req.params.id))
     if (!row) return res.status(404).json({ error: 'Producto no encontrado' })
     res.json(productToJson(row))
   } catch (err) {
@@ -45,7 +45,7 @@ router.post('/', async (req, res, next) => {
     const p = validateProduct(req.body || {})
     if (!p.title) return res.status(400).json({ error: 'El título del producto es obligatorio' })
     if (p.price === null) return res.status(400).json({ error: 'El precio debe ser un número válido' })
-    const row = createProduct(p)
+    const row = await createProduct(p)
     res.status(201).json(productToJson(row))
   } catch (err) {
     next(err)
@@ -61,7 +61,7 @@ router.put('/:id(\\d+)', async (req, res, next) => {
       if (field in body) fields[field] = field === 'gallery' ? p.gallery : p[field]
     }
     if (Object.keys(fields).length === 0) return res.status(400).json({ error: 'No hay campos para actualizar' })
-    const row = updateProduct(Number(req.params.id), fields)
+    const row = await updateProduct(Number(req.params.id), fields)
     if (!row) return res.status(404).json({ error: 'Producto no encontrado' })
     res.json(productToJson(row))
   } catch (err) {
@@ -71,7 +71,7 @@ router.put('/:id(\\d+)', async (req, res, next) => {
 
 router.delete('/:id(\\d+)', async (req, res, next) => {
   try {
-    const ok = deleteProduct(Number(req.params.id))
+    const ok = await deleteProduct(Number(req.params.id))
     if (!ok) return res.status(404).json({ error: 'Producto no encontrado' })
     res.status(204).end()
   } catch (err) {

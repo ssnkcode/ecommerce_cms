@@ -14,7 +14,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ error: 'Usuario y contraseña son requeridos' })
     }
 
-    const lock = getLoginLock(user)
+    const lock = await getLoginLock(user)
     if (lock) {
       const minsLeft = Math.max(1, Math.ceil((lock.lockedUntil - Date.now()) / 60000))
       return res.status(429).json({
@@ -25,7 +25,7 @@ router.post('/login', async (req, res, next) => {
     const admin = await getAdminByUsername(String(user))
     const ok = admin && (await bcrypt.compare(String(password), admin.password_hash))
     if (!ok) {
-      const info = recordFailedLogin(String(user))
+      const info = await recordFailedLogin(String(user))
       if (info.blocked) {
         return res.status(429).json({
           error: `Cuenta bloqueada por demasiados intentos fallidos. Volvé a intentar en ${LOCKOUT_MINUTES} min.`,
@@ -36,7 +36,7 @@ router.post('/login', async (req, res, next) => {
       })
     }
 
-    clearFailedLogins(String(user))
+    await clearFailedLogins(String(user))
     const token = await createSession(admin.id)
     res.cookie(COOKIE_NAME, token, sessionCookieOptions())
     res.json({ id: admin.id, username: admin.username })
