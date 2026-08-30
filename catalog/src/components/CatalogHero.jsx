@@ -18,8 +18,7 @@ export default function CatalogHero({ settings }) {
         decoding="async"
         aria-hidden="true"
       />
-      <div className="catalog-hero-overlay" aria-hidden="true" />
-      <div className="catalog-hero-content">
+      <div className="catalog-hero-content" style={settings.heroTextColor ? { color: settings.heroTextColor } : undefined}>
         <span className="tagline">{renderBold(settings.tagline)}</span>
         <h1>{settings.heroTitle}</h1>
       </div>

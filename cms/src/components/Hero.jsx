@@ -18,7 +18,7 @@ function Hero({ settings, updateSettings }) {
       siteName: form.siteName,
       tagline: form.tagline,
       heroTitle: form.heroTitle,
-      heroSubtitle: form.heroSubtitle,
+      heroTextColor: form.heroTextColor,
       heroImage: form.heroImage,
       heroImageSize: form.heroImageSize,
     })
@@ -43,8 +43,8 @@ function Hero({ settings, updateSettings }) {
             <input value={form.heroTitle} onChange={(e) => setForm({ ...form, heroTitle: e.target.value })} />
           </label>
           <label>
-            Subtítulo
-            <textarea value={form.heroSubtitle} onChange={(e) => setForm({ ...form, heroSubtitle: e.target.value })} />
+            Color de las letras del hero
+            <input type="color" value={form.heroTextColor || '#ffffff'} onChange={(e) => setForm({ ...form, heroTextColor: e.target.value })} />
           </label>
           <ImageField
             key={`hero-img-${form.heroImage || 'none'}`}
@@ -63,10 +63,9 @@ function Hero({ settings, updateSettings }) {
         </form>
       ) : (
         <div className="hero-content">
-          <div className="hero-text">
+          <div className="hero-text" style={settings.heroTextColor ? { color: settings.heroTextColor } : undefined}>
             <span className="tagline">{renderBold(settings.tagline)}</span>
             <h1>{settings.heroTitle}</h1>
-            <p>{settings.heroSubtitle}</p>
             <div className="hero-actions">
               <a href="#productos" className="btn-primary">Ver productos</a>
               <button className="btn-edit" onClick={startEdit}>

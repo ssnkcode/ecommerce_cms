@@ -16,7 +16,7 @@ export const defaultSettings = {
   siteName: 'SsnkCode',
   tagline: 'Mirá nuestro catálogo online y consegui precios exclusivos **HOY MISMO**!!!',
   heroTitle: 'Soluciones digitales que necesitas, al mejor precio',
-  heroSubtitle: 'Descubre los últimos productos con envío gratis en compras superiores a $50.',
+  heroTextColor: '',
   productsTitle: 'Nuestros productos',
   heroImage: '',
   heroImageSize: 420,
@@ -93,7 +93,6 @@ export function normalizeSettings(raw, base = defaultSettings) {
     }
   }
   if (isTextObsoleto(out.tagline)) out.tagline = base.tagline
-  if (isTextObsoleto(out.heroSubtitle)) out.heroSubtitle = base.heroSubtitle
   if (out.siteName === 'TechStore') {
     out.siteName = defaultSettings.siteName
     out.tagline = defaultSettings.tagline

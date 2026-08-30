@@ -103,7 +103,7 @@ export default function CatalogApp() {
     }
     applySEO({
       title: `${siteName} — Catálogo`,
-      description: settings.tagline || settings.heroSubtitle || `Catálogo digital de ${siteName}.`,
+      description: settings.tagline || `Catálogo digital de ${siteName}.`,
       image: (products[0] || {}).image || settings.heroImage || DEFAULT_HERO_IMAGE,
       url: baseUrl,
       siteName,

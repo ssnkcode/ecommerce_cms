@@ -299,37 +299,11 @@ svg {
   height: 600px;
   object-fit: cover;
   z-index: 0;
-  filter: brightness(0.55);
-}
-
-.catalog-hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  height: 600px;
-  min-height: 218px;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--bg) 88%, transparent),
-    color-mix(in srgb, var(--bg) 82%, transparent) 55%,
-    var(--bg)
-  );
-}
-
-[data-theme='light'] .catalog-hero-img {
-  filter: brightness(0.7);
-}
-
-[data-theme='light'] .catalog-hero-overlay {
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--hero-overlay-b) 500%);
 }
 
 .catalog-hero-content {
   position: relative;
   z-index: 2;
-}
-
-[data-theme='light'] .catalog-hero-content {
   background: color-mix(in srgb, var(--surface) 15%, transparent);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
@@ -342,7 +316,7 @@ svg {
 
 .tagline {
   display: inline-block;
-  color: var(--primary);
+  color: #111;
   font-weight: 800;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -350,18 +324,13 @@ svg {
   margin-bottom: 1.25rem;
   padding: 0.35rem 0.9rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
-}
-
-[data-theme='light'] .tagline {
   background: var(--tagline-bg);
-  color: #111;
-  border-color: var(--tagline-bg);
+  border: 1px solid var(--tagline-bg);
   box-shadow: var(--tagline-glow);
 }
 
 .catalog-hero h1 {
+  color: #000;
   font-size: clamp(1.6rem, 7vw, 2.8rem);
   line-height: 1.15;
   margin-bottom: 1.4rem;

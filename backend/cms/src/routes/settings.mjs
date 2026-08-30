@@ -7,7 +7,7 @@ const KEY_MAP = {
   siteName: 'site_name',
   tagline: 'tagline',
   heroTitle: 'hero_title',
-  heroSubtitle: 'hero_subtitle',
+  heroTextColor: 'hero_text_color',
   heroImage: 'hero_image',
   heroImageSize: 'hero_image_size',
   productsTitle: 'products_title',

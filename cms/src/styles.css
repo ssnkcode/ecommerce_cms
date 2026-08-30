@@ -572,16 +572,22 @@ button {
 
 .tagline {
   display: inline-block;
-  color: var(--primary);
-  font-weight: 700;
+  color: #111;
+  font-weight: 800;
   letter-spacing: 1px;
   text-transform: uppercase;
   font-size: clamp(0.72rem, 2.5vw, 0.85rem);
   margin-bottom: 0.75rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: var(--tagline-bg);
+  border: 1px solid var(--tagline-bg);
+  box-shadow: var(--tagline-glow);
   overflow-wrap: break-word;
 }
 
 .hero-text h1 {
+  color: #000;
   font-size: clamp(1.6rem, 7vw, 3rem);
   line-height: 1.1;
   margin-bottom: 1rem;
