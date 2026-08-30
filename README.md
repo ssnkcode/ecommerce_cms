@@ -12,8 +12,8 @@ Sistema para gestionar los productos, categorías y textos de un catálogo onlin
 cms/
 ├── cms/          # Panel CMS (React + Vite)  -> http://localhost:5178/cms/
 ├── catalog/      # Catálogo público (React)  -> http://localhost:5178/catalog/catalog.html
-├── utils/        # Lógica compartida (datos, iconos, accesibilidad, formato)
-├── backend/      # API Express + PostgreSQL
+├── utils/        # Lógica compartida (datos, iconos, accesibilidad, formato, cliente API)
+├── backend/      # API Express + capa de almacenamiento (en memoria por ahora)
 ├── db/           # Recursos de base de datos
 ├── dist/         # Build de producción (se genera con npm run build en cms/)
 └── iniciar-cms.bat  # Lanzador: PostgreSQL + API + Frontend + navegador
@@ -22,16 +22,17 @@ cms/
 ## Stack
 
 - **React 18** + **Vite 5** (frontend CMS y catálogo en un mismo build).
-- **Express 4** + **pg** + **bcryptjs** (API con autenticación y PostgreSQL) — puerto `3001`.
+- **Express 4** + **bcryptjs** (API con autenticación por cookie) — puerto `3001`.
+- **Almacenamiento en memoria** por ahora (`backend/cms/src/storage.mjs`): al reiniciar el proceso vuelve a los datos de ejemplo. Está pensada para reemplazarse por **PostgreSQL** sin tocar las rutas (misma forma de datos).
 - **jsPDF** para la exportación de catálogo a PDF (chunk `a11y`).
 
 ## Funcionalidades
 
 ### Panel CMS (`cms/`)
 - **Navbar**: logo, nombre, modo claro/oscuro, atajos a "Catálogo", "Vista previa" y "Exportar catálogo".
-- **Login**: credenciales por defecto `admin` / `admin123` (solicitables a la API).
-- **Hero**: edición de nombre del negocio, eslogan, título y subtítulo, e imagen de fondo. La imagen del hero **solo se aplica al catálogo**; el hero del CMS mantiene su aspecto fijo.
-- **Productos**: alta, edición y borrado. Auto-guardado en el navegador (`localStorage`).
+- **Login**: inicia sesión contra la API (`/api/auth/login`), credenciales por defecto `admin` / `admin123`. Sin sesión el CMS sigue funcionando con datos locales (sin sincronizar); con sesión los cambios se sincronizan con el backend automáticamente (debounce).
+- **Hero**: edición de nombre del negocio, eslogan, título y color de las letras, e imagen de fondo. La imagen del hero **solo se aplica al catálogo**; el hero del CMS mantiene su aspecto fijo.
+- **Productos**: alta, edición y borrado. Auto-guardado en el navegador (`localStorage`) y sincronizado al backend si hay sesión.
 - **Categorías** (CRUD desde el modal "Categorías"):
   - Borrador: los cambios se aplican solo al **Guardar** (Guardar no cierra el modal).
   - **Restaurar**: descarta los cambios pendientes o deshace el último guardado (incluso una eliminación), en cadena.
@@ -49,11 +50,12 @@ cms/
 
 ## Flujo de datos
 
-1. El CMS carga/guarda los datos en `localStorage` (clave `commerce-cms-data`).
-2. El catálogo usa **primero** lo guardado en `localStorage`; si no hay nada, obtiene `catalog/data.json`.
-3. "Exportar catálogo" genera `catalog/data.json` para que el catálogo "en frío" (sin datos locales) muestre los cambios.
+1. El CMS carga los datos desde la API (`GET /api/catalog`); si el backend no está disponible, usa `localStorage` y, en su defecto, `catalog/data.json`.
+2. Con **sesión iniciada** (`admin` / `admin123`), todos los cambios del CMS se envían al backend (`PUT /api/catalog`, con debounce) y se cachean en `localStorage`. Sin sesión solo se guarda en `localStorage`.
+3. El catálogo público consulta primero la API (`GET /api/catalog`, sin login); si no hay backend, usa `localStorage` y, en su defecto, `catalog/data.json`.
+4. "Exportar catálogo" genera `catalog/data.json` para que el catálogo "en frío" (sin datos locales ni backend) muestre los cambios.
 
-> Nota: si el navegador ya tiene datos guardados, estos prevalecen sobre los defaults de `catalog/data.json`. Para forzar los valores por defecto, borrar los datos guardados en el navegador (localStorage).
+> Nota: el almacenamiento del backend es **en memoria** por ahora: al reiniciar `npm run dev` vuelve a los datos de ejemplo. Cuando se conecte PostgreSQL, solo se reemplaza el interior de `backend/cms/src/storage.mjs`.
 
 ## Formato de textos
 
@@ -74,8 +76,7 @@ cd cms && npm run build        # genera F:\upc\cms\dist
 
 # Backend
 cd backend/cms
-npm run db:init                # inicializa la base / esquemas (SQL en backend/cms/sql)
-npm run dev                    # API en http://localhost:3001
+npm run dev                    # API en http://localhost:3001  (usuarios: admin/admin123)
 ```
 
 O simplemente ejecutar `iniciar-cms.bat` para levantar todo (PostgreSQL, API, frontend y abrir el navegador).

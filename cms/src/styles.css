@@ -1933,3 +1933,153 @@ button {
 .cat-manager-box .btn-save:hover:not(:disabled) {
   background: color-mix(in srgb, var(--success) 80%, #000);
 }
+
+/* =========================================================
+   SESIÓN / BACKEND
+   ========================================================= */
+.nav-session {
+  white-space: nowrap;
+}
+
+.nav-session-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.2rem 0.4rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 0.82rem;
+}
+
+.nav-session-user {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.nav-session-out {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 7px;
+}
+
+.nav-session-out:hover {
+  color: var(--danger);
+}
+
+.login-modal-cms {
+  position: relative;
+  max-width: 360px;
+}
+
+.login-close-cms {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.login-close-cms:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.login-head-cms {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.3rem;
+  margin-bottom: 1.1rem;
+}
+
+.login-logo-cms {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--primary);
+  margin-bottom: 0.3rem;
+}
+
+.login-form-cms {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.login-field-cms {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.login-field-cms span {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.login-field-cms input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.login-field-cms input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.login-error-cms {
+  color: var(--danger);
+  font-size: 0.84rem;
+  margin-top: -0.2rem;
+}
+
+.sync-toast {
+  position: fixed;
+  bottom: 1.2rem;
+  left: 50%;
+  z-index: 200;
+  transform: translateX(-50%);
+  padding: 0.65rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-modal);
+  animation: catPop 0.2s ease;
+}
+
+.sync-toast.ok {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+}
+
+.sync-toast.err {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}

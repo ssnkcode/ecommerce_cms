@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { pool } from './db.mjs'
+import { getAdminByUsername, createSession, destroySession, sessionUser } from './storage.mjs'
 
 export const COOKIE_NAME = 'cms_session'
 
@@ -23,50 +23,14 @@ export function sessionCookieOptions() {
   }
 }
 
-export async function getAdminByUsername(username) {
-  const { rows } = await pool.query(
-    'SELECT id, username, password_hash FROM cms_admins WHERE username = $1',
-    [username],
-  )
-  return rows[0]
-}
-
-export async function createSession(adminId) {
-  const token = randomToken()
-  await pool.query(
-    `INSERT INTO cms_sessions (token_hash, admin_id, expires_at)
-     VALUES ($1, $2, now() + ($3 * interval '1 hour'))`,
-    [sha256(token), adminId, sessionTtlHours()],
-  )
-  return token
-}
-
-export async function destroySession(token) {
-  if (!token) return
-  await pool.query('DELETE FROM cms_sessions WHERE token_hash = $1', [sha256(token)])
-}
-
-export async function sessionUser(token) {
-  if (!token) return null
-  const { rows } = await pool.query(
-    `SELECT s.admin_id, a.username, s.expires_at
-     FROM cms_sessions s
-     JOIN cms_admins a ON a.id = s.admin_id
-     WHERE s.token_hash = $1 AND s.expires_at > now()`,
-    [sha256(token)],
-  )
-  return rows[0] || null
-}
+export { getAdminByUsername }
 
 export async function requireAuth(req, res, next) {
-  try {
-    const user = await sessionUser(req.cookies?.[COOKIE_NAME])
-    if (!user) {
-      return res.status(401).json({ error: 'No autorizado. Iniciá sesión en el panel.' })
-    }
-    req.admin = user
-    next()
-  } catch (err) {
-    next(err)
+  const token = req.cookies?.[COOKIE_NAME]
+  const user = sessionUser(token)
+  if (!user) {
+    return res.status(401).json({ error: 'No autorizado. Iniciá sesión en el panel.' })
   }
+  req.admin = user
+  next()
 }

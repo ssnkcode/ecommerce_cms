@@ -10,8 +10,6 @@ export const WHATSAPP_NUMBER = '543541682310'
 export const WHATSAPP_FOOTER =
   'SOLO SE RESERVA CON SEÑA DEL 50% PREVIA!\nSaludos desde polirrubroSSNK!!!'
 
-export const ADMIN_CREDENTIALS = { user: 'admin', password: 'admin123' }
-
 export const defaultSettings = {
   siteName: 'SsnkCode',
   tagline: 'Mirá nuestro catálogo online y consegui precios exclusivos **HOY MISMO**!!!',

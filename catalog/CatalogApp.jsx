@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { readData, readCart, saveCart, normalizeData, THEME_KEY, WHATSAPP_NUMBER, STORAGE_KEY, CATALOG_URL, DEFAULT_HERO_IMAGE } from '../utils/datos.js'
+import { readData, readCart, saveCart, saveData, normalizeData, THEME_KEY, WHATSAPP_NUMBER, STORAGE_KEY, CATALOG_URL, DEFAULT_HERO_IMAGE } from '../utils/datos.js'
+import { checkApi, apiFetchCatalog } from '../utils/api.js'
 import { applySEO } from '../utils/seo.jsx'
 import { IconBox } from '../utils/icons.jsx'
 import CatalogNavbar from './src/components/CatalogNavbar.jsx'
@@ -48,29 +49,47 @@ export default function CatalogApp() {
 
   useEffect(() => {
     let mounted = true
-    if (localStorage.getItem(STORAGE_KEY) != null) {
-      setStatus('ready')
-      return () => {
-        mounted = false
+    const applyIfEmpty = (data) => {
+      setData((prev) => {
+        const current = readData()
+        return current.products.length ? prev : data
+      })
+    }
+
+    const loadFallback = () => {
+      if (localStorage.getItem(STORAGE_KEY) != null) {
+        setStatus('ready')
+        return
       }
+      fetch(CATALOG_URL)
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((json) => {
+          if (mounted && json && Array.isArray(json.products) && json.products.length) {
+            applyIfEmpty(normalizeData(json))
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (mounted) setStatus('ready')
+        })
     }
-    fetch(CATALOG_URL)
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((json) => {
-        if (mounted && json && Array.isArray(json.products) && json.products.length) {
-          setData((prev) => {
-            const current = readData()
-            return current.products.length ? prev : normalizeData(json)
-          })
+
+    checkApi()
+      .then((online) => (online ? apiFetchCatalog() : null))
+      .then((catalog) => {
+        if (!mounted) return
+        if (catalog && catalog.ok && catalog.data && Array.isArray(catalog.data.products)) {
+          const normalized = normalizeData(catalog.data)
+          setData(normalized)
+          saveData({ settings: normalized.settings, products: normalized.products })
+          setStatus('ready')
+          return
         }
+        loadFallback()
       })
-      .catch(() => {})
-      .finally(() => {
-        if (mounted) setStatus('ready')
+      .catch(() => {
+        if (mounted) loadFallback()
       })
-    return () => {
-      mounted = false
-    }
   }, [])
 
   const refresh = () => setData(readData())
