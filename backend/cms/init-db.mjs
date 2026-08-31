@@ -26,8 +26,6 @@ const serviceHost = url.hostname || 'localhost'
 const servicePort = url.port || '5432'
 const serviceUser = url.username || 'postgres'
 const servicePassword = decodeURIComponent(url.password || '')
-const adminUser = process.env.ADMIN_USER || 'admin'
-const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'
 
 // Localiza el ejecutable de psql: primero la variable PG_BIN, después rutas de
 // instalación habituales en Windows, y al final psql en el PATH.
@@ -58,7 +56,6 @@ function main() {
   console.log('Inicializando base de datos del Commerce CMS ...')
   console.log(`  Servidor : ${serviceHost}:${servicePort}`)
   console.log(`  Base     : ${dbName}  (usa DBNAME, ver db/base_completa.sql)`)
-  console.log(`  Admin    : ${adminUser} / ${adminPassword}`)
   console.log(`  Script   : ${SCRIPT}`)
 
   const env = {

@@ -6,6 +6,7 @@ import ExportModal from './components/ExportModal.jsx'
 import PreviewModal from './components/PreviewModal.jsx'
 import PrintSheet from './components/PrintSheet.jsx'
 import LoginModal from './components/LoginModal.jsx'
+import CredentialsModal from './components/CredentialsModal.jsx'
 import { readData, saveData, normalizeData, defaultProducts, defaultSettings, THEME_KEY, CATALOG_URL, WHATSAPP_NUMBER } from '../../utils/datos.js'
 import { checkApi, apiGetMe, apiFetchCatalog, apiSaveCatalog, apiLogout } from '../../utils/api.js'
 
@@ -36,6 +37,7 @@ export default function App() {
   const [data, setData] = useState(loadLocal)
   const [session, setSession] = useState('checking')
   const [showLogin, setShowLogin] = useState(false)
+  const [showCredentials, setShowCredentials] = useState(false)
   const [syncToast, setSyncToast] = useState(null)
   const [exportChoice, setExportChoice] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -235,6 +237,10 @@ export default function App() {
         onToggleTheme={toggleTheme}
         onExport={() => setExportChoice(true)}
         onPreview={() => setPreviewOpen(true)}
+        session={session && session !== 'checking' ? session : null}
+        onLogin={() => setShowLogin(true)}
+        onLogout={doLogout}
+        onCredentials={() => setShowCredentials(true)}
       />
       <main id="contenido-principal" tabIndex={-1}>
         <Hero settings={settings} updateSettings={saveDataActions.updateSettings} />
@@ -288,6 +294,14 @@ export default function App() {
             apiGetMe().then((res) => setSession(res.ok ? { username: res.data && res.data.username } : null))
             apiOnlineRef.current = true
           }}
+        />
+      )}
+
+      {showCredentials && (
+        <CredentialsModal
+          currentUsername={session && session.username ? session.username : ''}
+          onClose={() => setShowCredentials(false)}
+          onSaved={(username) => setSession({ username })}
         />
       )}
 

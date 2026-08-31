@@ -1,9 +1,12 @@
 -- ============================================================================
---  COMMERCE CMS - BASE DE DATOS COMPLETA (PostgreSQL 14+)
+--  COMMERCE CMS - SUPABASE (PostgreSQL 14+)
 --  ----------------------------------------------------------------------------
---  Script único con TODAS las tablas que usa el backend del panel CMS +
---  catálogo. No le falta nada:
+--  Script preparado para el SQL Editor de Supabase.
+--  NO usa comandos de psql (\getenv, \if, \gexec, \connect, \set), por eso
+--  funciona pegado tal cual. Supabase ya te da la base creada, así que no hace
+--  falta el CREATE DATABASE / \connect.
 --
+--  Crea las 5 tablas:
 --    cms_settings         -> ajustes del sitio (nombre, hero, logo, whatsapp,
 --                            categorías, exportación PDF) como clave:valor.
 --    cms_admins           -> usuarios del panel (contraseña en hash bcrypt).
@@ -11,39 +14,9 @@
 --    cms_login_attempts   -> bloqueo de seguridad: 3 intentos fallidos = 10 min.
 --    products             -> productos con imágenes, galería, precios y specs.
 --
---  ESTE ARCHIVO CUBRE LOS DOS SQL ANTERIORES (sql/cms.sql + sql/catalogo.sql),
---  unificándolos en uno solo dentro de db/.
---
---  CÓMO EJECUTARLO:
---      psql -U postgres -h localhost -f db/base_completa.sql
---
---  O creando la base manualmente una vez y luego:
---      psql -U postgres -h localhost -d commerce_cms -f db/base_completa.sql
---
---  No se crea ningún usuario por defecto: el primer admin se registra desde el
---  catálogo (botón ADMIN → Crear cuenta) o vía ADMIN_USER/ADMIN_PASSWORD en el
---  entorno del backend.
+--  + seed de settings y productos (no crea ningún admin por defecto: el primer
+--  administrador se registra desde el catálogo o vía ADMIN_USER/ADMIN_PASSWORD).
 -- ============================================================================
-
--- ----------------------------------------------------------------------------
---  0) CREAR LA BASE DE DATOS (si no existe)
---     \gexec ejecuta el resultado del SELECT como SQL -> crea la base.
---     Después nos conectamos a ella.
---
---     El nombre de la base sale de la variable de entorno DBNAME si está
---     seteada (útil para testear instalación limpia en otra base), si no usa
---     el valor por defecto: commerce_cms.
--- ----------------------------------------------------------------------------
-\getenv dbname DBNAME
-\if :{?dbname}
-\else
-    \set dbname commerce_cms
-\endif
-
-SELECT 'CREATE DATABASE ' || quote_ident(:'dbname')
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'dbname')\gexec
-
-\connect :dbname
 
 -- ----------------------------------------------------------------------------
 --  1) AJUSTES GENERALES DEL SITIO (cms_settings)

@@ -65,6 +65,15 @@ export const IconEye = (props) => (
   </Svg>
 )
 
+export const IconEyeOff = (props) => (
+  <Svg {...props}>
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 4.06-5.94" />
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19" />
+    <path d="m1 1 22 22" />
+    <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+  </Svg>
+)
+
 export const IconChevronLeft = (props) => (
   <Svg {...props}>
     <path d="m15 18-6-6 6-6" />
@@ -151,6 +160,28 @@ export const IconLock = (props) => (
   <Svg {...props}>
     <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </Svg>
+)
+
+export const IconUser = (props) => (
+  <Svg {...props}>
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </Svg>
+)
+
+export const IconMail = (props) => (
+  <Svg {...props}>
+    <rect width="20" height="16" x="2" y="4" rx="2" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+  </Svg>
+)
+
+export const IconLogout = (props) => (
+  <Svg {...props}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <path d="m16 17 5-5-5-5" />
+    <path d="M21 12H9" />
   </Svg>
 )
 

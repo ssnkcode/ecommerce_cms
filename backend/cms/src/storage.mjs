@@ -14,8 +14,8 @@ import { pool } from './db.mjs'
 
 // ---------- Configuración por defecto (fallback de seed) --------------------
 
-const DEFAULT_ADMIN_USER = process.env.ADMIN_USER || 'admin'
-const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'
+const DEFAULT_ADMIN_USER = process.env.ADMIN_USER
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
 
 const DEFAULT_SETTINGS = {
   site_name: 'SsnkCode',
@@ -148,6 +148,102 @@ export async function getAdminByUsername(username) {
   return rows.length ? rows[0] : null
 }
 
+export async function getAdminByEmail(email) {
+  const { rows } = await pool.query(
+    'SELECT id, username, email, email_verified, password_hash, created_at FROM cms_admins WHERE lower(email) = lower($1)',
+    [String(email).trim()],
+  )
+  return rows.length ? rows[0] : null
+}
+
+export async function getAdminById(id) {
+  const { rows } = await pool.query(
+    'SELECT id, username, email, email_verified, created_at FROM cms_admins WHERE id = $1',
+    [id],
+  )
+  return rows.length ? rows[0] : null
+}
+
+// Login acepta nombre de usuario O email.
+export async function findAdminForLogin(identifier) {
+  const key = String(identifier).trim()
+  const { rows } = await pool.query(
+    `SELECT id, username, email, email_verified, password_hash, created_at
+       FROM cms_admins
+      WHERE username = $1 OR lower(email) = lower($1)
+      LIMIT 1`,
+    [key],
+  )
+  return rows.length ? rows[0] : null
+}
+
+export async function createAdmin({ username, email, passwordHash }) {
+  const { rows } = await pool.query(
+    `INSERT INTO cms_admins (username, email, password_hash)
+     VALUES ($1, $2, $3)
+     RETURNING id, username, email, email_verified`,
+    [username, String(email).trim().toLowerCase(), passwordHash],
+  )
+  return rows[0]
+}
+
+export async function setAdminVerifyToken(adminId, token, expiryISO) {
+  await pool.query(
+    'UPDATE cms_admins SET verify_token = $2, verify_token_expiry = $3 WHERE id = $1',
+    [adminId, token, expiryISO],
+  )
+}
+
+export async function getAdminByVerifyToken(token) {
+  const { rows } = await pool.query(
+    'SELECT id, username, email, email_verified, verify_token_expiry FROM cms_admins WHERE verify_token = $1',
+    [String(token)],
+  )
+  return rows.length ? rows[0] : null
+}
+
+export async function verifyAdminEmail(adminId) {
+  await pool.query(
+    `UPDATE cms_admins
+        SET email_verified = TRUE, verify_token = NULL, verify_token_expiry = NULL
+      WHERE id = $1`,
+    [adminId],
+  )
+}
+
+export async function setAdminResetToken(adminId, token, expiryISO) {
+  await pool.query(
+    'UPDATE cms_admins SET reset_token = $2, reset_token_expiry = $3 WHERE id = $1',
+    [adminId, token, expiryISO],
+  )
+}
+
+export async function getAdminByResetToken(token) {
+  const { rows } = await pool.query(
+    'SELECT id, username, email, email_verified, reset_token_expiry FROM cms_admins WHERE reset_token = $1',
+    [String(token)],
+  )
+  return rows.length ? rows[0] : null
+}
+
+export async function resetAdminPassword(adminId, passwordHash) {
+  await pool.query(
+    `UPDATE cms_admins
+        SET password_hash = $2, reset_token = NULL, reset_token_expiry = NULL
+      WHERE id = $1`,
+    [adminId, passwordHash],
+  )
+}
+
+export async function updateAdminEmail(adminId, email, verifyToken, expiryISO) {
+  await pool.query(
+    `UPDATE cms_admins
+        SET email = $2, email_verified = FALSE, verify_token = $3, verify_token_expiry = $4
+      WHERE id = $1`,
+    [adminId, String(email).trim().toLowerCase(), verifyToken, expiryISO],
+  )
+}
+
 export async function createSession(adminId) {
   const token = crypto.randomBytes(32).toString('hex')
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
@@ -182,6 +278,35 @@ export async function sessionUser(token) {
     return null
   }
   return { admin_id: Number(row.admin_id), username: row.username, expires_at: row.expires_at }
+}
+
+export async function updateAdminCredentials(adminId, { username, passwordHash }) {
+  const sets = []
+  const values = []
+  if (username !== undefined) {
+    values.push(String(username))
+    sets.push(`username = $${values.length}`)
+  }
+  if (passwordHash !== undefined) {
+    values.push(passwordHash)
+    sets.push(`password_hash = $${values.length}`)
+  }
+  if (!sets.length) return null
+  values.push(adminId)
+  const { rows } = await pool.query(
+    `UPDATE cms_admins SET ${sets.join(', ')} WHERE id = $${values.length} RETURNING id, username`,
+    values,
+  )
+  return rows.length ? rows[0] : null
+}
+
+export async function destroyOtherSessions(adminId, keepToken) {
+  if (!keepToken) {
+    await pool.query('DELETE FROM cms_sessions WHERE admin_id = $1', [adminId])
+    return
+  }
+  const keepHash = crypto.createHash('sha256').update(String(keepToken)).digest('hex')
+  await pool.query('DELETE FROM cms_sessions WHERE admin_id = $1 AND token_hash <> $2', [adminId, keepHash])
 }
 
 function sessionTtlMs() {
@@ -381,11 +506,14 @@ async function runSeed() {
       await client.query('INSERT INTO cms_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING', ['categories', DEFAULT_CATEGORIES])
     }
 
-    // Admin por defecto (si no existe)
-    const { rows: admRows } = await client.query('SELECT count(*)::int AS n FROM cms_admins')
-    if (admRows[0].n === 0) {
-      const hash = bcrypt.hashSync(DEFAULT_ADMIN_PASSWORD, 10)
-      await client.query('INSERT INTO cms_admins (username, password_hash) VALUES ($1, $2)', [DEFAULT_ADMIN_USER, hash])
+    // Admin inicial: SOLO si no hay ningún usuario Y se definió ADMIN_USER/ADMIN_PASSWORD
+    // en el entorno. Ya no existen "admin/admin123" por defecto.
+    if (DEFAULT_ADMIN_USER && DEFAULT_ADMIN_PASSWORD) {
+      const { rows: admRows } = await client.query('SELECT count(*)::int AS n FROM cms_admins')
+      if (admRows[0].n === 0) {
+        const hash = bcrypt.hashSync(DEFAULT_ADMIN_PASSWORD, 10)
+        await client.query('INSERT INTO cms_admins (username, password_hash) VALUES ($1, $2)', [DEFAULT_ADMIN_USER, hash])
+      }
     }
 
     // Productos por defecto (si la tabla está vacía)

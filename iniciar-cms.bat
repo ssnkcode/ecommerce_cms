@@ -9,13 +9,14 @@ echo   Inicia: PostgreSQL + API + Frontend + navegador
 echo ============================================================
 echo.
 
-REM --- Configuración de rutas (relativas a este .bat) ---
+REM --- Configuracion de rutas (relativas a este .bat) ---
 set "BACKEND_DIR=%~dp0backend\cms"
 set "FRONTEND_DIR=%~dp0cms"
 set "API_PORT=3001"
 set "FRONT_PORT=5178"
 set "API_URL=http://localhost:%API_PORT%"
-set "FRONT_URL=http://localhost:%FRONT_PORT%/cms/"
+set "FRONT_URL=http://localhost:%FRONT_PORT%/catalog/catalog.html"
+set "PANEL_URL=http://localhost:%FRONT_PORT%/cms/"
 
 REM ============================================================================
 REM 1) Chequear Node.js
@@ -54,7 +55,7 @@ if not defined psql_found (
 )
 if defined psql_found (
     echo [OK]     PostgreSQL encontrado: %psql_found%
-    REM Levantar el servicio si está detenido
+    REM Levantar el servicio si esta detenido
     for /f "delims=" %%s in ('sc query type=service state=inactive ^| findstr /i "postgresql"') do (
         echo [PG]     Hay un servicio PostgreSQL detenido, intentando iniciarlo...
         sc start postgresql-x64-18 >nul 2>nul
@@ -86,6 +87,8 @@ if not exist "%BACKEND_DIR%\.env" (
 
 REM ============================================================================
 REM 4) Instalar dependencias si faltan y correr db:init
+REM    (el seed es no destructivo: no pisa la contrasena del admin ni duplica
+REM     productos si la tabla ya tiene datos)
 REM ============================================================================
 if not exist "%BACKEND_DIR%\node_modules" (
     echo [NPM]    Instalando dependencias del backend...
@@ -147,11 +150,11 @@ start "Commerce CMS - Frontend" cmd /k "cd /d ""%FRONTEND_DIR%"" && npm run dev"
 echo [FRONT]  frontend arrancando en http://localhost:%FRONT_PORT% ...
 
 REM ============================================================================
-REM 8) Esperar a que responda la API y el frontend, y abrir el navegador
+REM 8) Esperar a que respondan la API y el catalogo, y abrir el navegador
 REM ============================================================================
-echo [CHECK]  esperando a que respondan API y frontend ...
+echo [CHECK]  esperando a que respondan API y catalogo ...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$api='%API_URL%/api/health'; $fr='%FRONT_URL%'; $apiOk=$false; $frOk=$false; for($i=0;$i -lt 120;$i++){ if(-not $apiOk){ try { $r=Invoke-WebRequest -Uri $api -UseBasicParsing -TimeoutSec 2; if($r.StatusCode -eq 200){ $apiOk=$true; Write-Host '  [API]    responde' } } catch {} }; if(-not $frOk){ try { $r=Invoke-WebRequest -Uri $fr -UseBasicParsing -TimeoutSec 2; if($r.StatusCode -eq 200){ $frOk=$true; Write-Host '  [FRONT]  responde' } } catch {} }; if($apiOk -and $frOk){ break }; Start-Sleep -Milliseconds 500 }; if($frOk){ Start-Process $fr; Write-Host '[VIEW]  abriendo el navegador en el panel CMS' } else { Write-Host '[VIEW]  no se confirmo el frontend; revisa las ventanas' }; if($apiOk){ exit 0 } else { Write-Host '[AVISO] la API no respondio; revisa la ventana API y su .env'; exit 1 }"
+  "$api='%API_URL%/api/health'; $cat='%FRONT_URL%'; $apiOk=$false; $catOk=$false; for($i=0;$i -lt 120;$i++){ if(-not $apiOk){ try { $r=Invoke-WebRequest -Uri $api -UseBasicParsing -TimeoutSec 2; if($r.StatusCode -eq 200){ $apiOk=$true; Write-Host '  [API]    responde' } } catch {} }; if(-not $catOk){ try { $r=Invoke-WebRequest -Uri $cat -UseBasicParsing -TimeoutSec 2; if($r.StatusCode -eq 200){ $catOk=$true; Write-Host '  [CAT]    catalogo responde' } } catch {} }; if($apiOk -and $catOk){ break }; Start-Sleep -Milliseconds 500 }; if($catOk){ Start-Process $cat; Write-Host '[VIEW]  abriendo el catalogo en el navegador' } else { Write-Host '[VIEW]  no se confirmo el frontend; revisa la ventana del frontend' }; if($apiOk){ Write-Host '[OK]  Catalogo en %FRONT_URL%'; Write-Host '[OK]  Panel CMS en %PANEL_URL%'; exit 0 } else { Write-Host '[AVISO] la API no respondio; revisa la ventana API y su .env'; exit 1 }"
 
 echo.
 echo  Listo. Deja esta ventana minimizada.

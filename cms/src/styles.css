@@ -234,6 +234,53 @@ button {
   border-color: var(--primary);
 }
 
+.nav-session {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.nav-session-user,
+.nav-session-login,
+.nav-session-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  font-size: clamp(0.75rem, 2vw, 0.85rem);
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  transition: all 0.2s;
+}
+
+.nav-session-user:hover,
+.nav-session-login:hover,
+.nav-session-logout:hover {
+  border-color: var(--primary);
+}
+
+.nav-session-login {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.nav-session-login:hover {
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.nav-session-logout {
+  color: var(--danger);
+}
+
+.nav-session-logout:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--primary-contrast);
+}
+
 /* ---------- Menú hamburguesa ---------- */
 .menu-toggle {
   display: none;
@@ -2099,6 +2146,12 @@ button {
 
 .login-error-cms {
   color: var(--danger);
+  font-size: 0.84rem;
+  margin-top: -0.2rem;
+}
+
+.login-ok-cms {
+  color: var(--success);
   font-size: 0.84rem;
   margin-top: -0.2rem;
 }

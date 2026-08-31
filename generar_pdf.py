@@ -118,8 +118,8 @@ story.append(Paragraph("2. Refactorizar / deuda técnica", section_style))
 ref_items = [
     ("Datos en localStorage sin validación de esquema ni migraciones.",
      "Si cambia el esquema (ej. nuevo campo) el JSON guardado puede romper el render. Falta validar tipos al leer y una estrategia de versionado."),
-    ("Credenciales admin hardcodeadas en el bundle del cliente (admin / admin123).",
-     "Se ven en el código fuente del navegador. El panel no está protegido a nivel de ruta: /cms/ es accesible sin login. A resolver con el backend."),
+    ("Ya no existe credencial por defecto: las cuentas se crean desde el catálogo (ADMIN → Crear cuenta) con verificación por correo.",
+     "El backend autentica por token (Authorization: Bearer) y valida cada ruta de administración."),
     ("Lógica de datos duplicada entre CMS (App.jsx) y catálogo (CatalogApp.jsx).",
      "Ambos leen/escriben el mismo STORAGE_KEY y redefinen defaults. Conviene extraer un módulo común (utils/datos) para no duplicar."),
     ("Código JSX de fragmentos de UI mezclado en componentes grandes.",
