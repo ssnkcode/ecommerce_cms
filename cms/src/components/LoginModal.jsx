@@ -15,14 +15,19 @@ export default function LoginModal({ onClose, onSuccess }) {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const res = await apiLogin(user.trim(), password)
-    setLoading(false)
-    if (res.ok) {
-      if (onSuccess) onSuccess(res.data)
-      onClose()
-      return
+    try {
+      const res = await apiLogin(user.trim(), password)
+      if (res.ok) {
+        if (onSuccess) onSuccess(res.data)
+        onClose()
+        return
+      }
+      setError(res.error || 'No se pudo iniciar sesión.')
+    } catch {
+      setError('Ocurrió un error inesperado. Volvé a intentar.')
+    } finally {
+      setLoading(false)
     }
-    setError(res.error || 'No se pudo iniciar sesión.')
   }
 
   return (

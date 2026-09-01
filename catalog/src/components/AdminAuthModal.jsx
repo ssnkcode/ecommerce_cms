@@ -54,13 +54,17 @@ export default function AdminAuthModal({ onClose, initialView = 'login', initial
   const runVerify = async (tok) => {
     setLoading(true)
     setError('')
-    const res = await apiVerifyEmail(String(tok).split('/').pop())
-    setLoading(false)
-    if (res.ok) {
-      setInfo(res.data?.message || 'Correo confirmado. Ya podés iniciar sesión.')
-      setView('login')
-    } else {
-      setError(res.error || 'El enlace no es válido o venció.')
+    try {
+      const res = await apiVerifyEmail(String(tok).split('/').pop())
+      if (res.ok) {
+        setInfo(res.data?.message || 'Correo confirmado. Ya podés iniciar sesión.')
+      } else {
+        setError(res.error || 'El enlace no es válido o venció.')
+      }
+    } catch {
+      setError('No se pudo confirmar el correo. Volvé a intentar.')
+    } finally {
+      setLoading(false)
       setView('login')
     }
   }
@@ -76,14 +80,19 @@ export default function AdminAuthModal({ onClose, initialView = 'login', initial
     e.preventDefault()
     setError('')
     setLoading(true)
-    const res = await apiLogin(user.trim(), password)
-    setLoading(false)
-    if (res.ok) {
-      window.location.href = '/cms/'
-    } else if (res.error) {
-      setError(res.error)
-    } else {
-      setError('Usuario o contraseña incorrectos.')
+    try {
+      const res = await apiLogin(user.trim(), password)
+      if (res.ok) {
+        window.location.href = '/cms/'
+      } else if (res.error) {
+        setError(res.error)
+      } else {
+        setError('Usuario o contraseña incorrectos.')
+      }
+    } catch {
+      setError('Ocurrió un error inesperado. Volvé a intentar.')
+    } finally {
+      setLoading(false)
     }
   }
 

@@ -2,24 +2,24 @@ import { useRef, useState } from 'react'
 import { CategoryIcon, IconTag, IconCheck, IconPencil, IconTrash, IconClose, IconImage, IconUpload, IconPlus, IconRestore } from '../../../utils/icons.jsx'
 import { processImageFile as compressImageFile } from '../../../utils/images.js'
 import { useFocusTrap } from '../../../utils/a11y.jsx'
+import { formatPrice } from '../../../utils/datos.js'
 
 const emptyProduct = { title: '', category: '', price: '', description: '', specs: '', image: '', gallery: [] }
 
-// Convierte el texto del input de precio a número. Soporta separadores de miles
-// con punto (1.200.000) y coma decimal (89,99). Ej: "1.200.000.000" -> 1200000000
+// Convierte el texto del input de precio a número. Usa el formato es-AR (el mismo
+// que usa `toLocaleString` al precargar el formulario): el punto agrupa miles y la
+// coma es el separador decimal.
+//   "687.000"    -> 687000  (punto = miles)
+//   "1.200.000"  -> 1200000
+//   "89,99"      -> 89.99   (coma = decimal)
+//   "687"        -> 687
 function parsePriceInput(raw) {
   if (raw == null || raw === '') return 0
   let s = String(raw).trim()
   if (!s) return 0
-  const lastComma = s.lastIndexOf(',')
-  const lastDot = s.lastIndexOf('.')
-  // Si hay coma, se la toma como separador decimal y los puntos como miles.
-  if (lastComma > -1) {
-    s = s.replace(/\./g, '').replace(',', '.')
-  } else if (lastDot > -1 && s.indexOf('.') !== s.lastIndexOf('.')) {
-    // Varios puntos y sin coma: todos son separadores de miles.
-    s = s.replace(/\./g, '')
-  }
+  // Sin coma -> los puntos son separadores de miles: se quitan.
+  // Con coma -> el punto también es de miles y la coma pasa a ser el decimal.
+  s = s.replace(/\./g, '').replace(',', '.')
   const n = Number(s)
   return Number.isFinite(n) && n >= 0 ? n : 0
 }
@@ -65,7 +65,7 @@ function ProductCard({ product, onEdit, onRemove }) {
         <h3>{product.title}</h3>
         <p>{product.description}</p>
         <div className="card-footer">
-          <span className="card-price">${product.price}</span>
+          <span className="card-price">${formatPrice(product.price)}</span>
           <button className="btn-buy">Comprar</button>
         </div>
       </div>

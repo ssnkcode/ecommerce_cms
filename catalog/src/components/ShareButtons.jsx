@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatPrice } from '../../../utils/datos.js'
 
 export function productShareUrl(product) {
   const { origin, pathname } = window.location
@@ -47,7 +48,7 @@ export default function ShareButtons({ product }) {
   const [copied, setCopied] = useState(false)
 
   const url = productShareUrl(product)
-  const text = `Mirá este producto: ${product.title} — $${product.price}`
+  const text = `Mirá este producto: ${product.title} — $${formatPrice(product.price)}`
   const open = (href) => window.open(href, '_blank', 'noopener,noreferrer')
 
   const copy = async () => {

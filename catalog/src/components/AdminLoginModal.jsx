@@ -15,12 +15,17 @@ export default function AdminLoginModal({ onClose }) {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const res = await apiLogin(user.trim(), password)
-    setLoading(false)
-    if (res.ok) {
-      window.location.href = '/cms/'
-    } else {
-      setError(res.error || 'Usuario o contraseña incorrectos.')
+    try {
+      const res = await apiLogin(user.trim(), password)
+      if (res.ok) {
+        window.location.href = '/cms/'
+      } else {
+        setError(res.error || 'Usuario o contraseña incorrectos.')
+      }
+    } catch {
+      setError('Ocurrió un error inesperado. Volvé a intentar.')
+    } finally {
+      setLoading(false)
     }
   }
 

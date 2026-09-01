@@ -40,15 +40,41 @@ export function setApiReachable(value) {
   cachedApiOnline = value
 }
 
+// Tiempo máximo de espera para una petición API. Evita que el UI se quede
+// clavado en estados de "Verificando..." / "Entrando..." si el backend no contesta.
+const REQUEST_TIMEOUT_MS = 12000
+
 async function request(path, options = {}) {
   const token = getToken()
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) }
   if (token) headers.Authorization = `Bearer ${token}`
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    credentials: 'include',
-    headers,
-    ...options,
-  })
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  let res
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      credentials: 'include',
+      headers,
+      signal: controller.signal,
+      ...options,
+    })
+  } catch (err) {
+    // Red caída, CORS, timeout o error de red: nunca dejamos que la promesa
+    // rechace sin que el llamador resetee su estado de "loading".
+    const timedOut = err && err.name === 'AbortError'
+    return {
+      _error: true,
+      status: 0,
+      error: timedOut
+        ? 'El servidor tardó demasiado en responder. Volvé a intentar.'
+        : 'No se pudo conectar con el servidor. Verificá tu conexión e intentá de nuevo.',
+    }
+  } finally {
+    clearTimeout(timer)
+  }
+
   if (res.status === 401) {
     let unauthorized = false
     let authError = 'No autorizado'

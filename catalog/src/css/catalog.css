@@ -413,25 +413,26 @@ svg {
 }
 
 .cat-card-emoji {
-  font-size: 2.6rem;
+  font-size: 3.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: clamp(90px, 20vw, 110px);
+  height: clamp(160px, 30vw, 220px);
   aspect-ratio: 3 / 2;
   background: var(--surface-2);
   overflow: hidden;
 }
 
 .cat-card-emoji svg {
-  width: clamp(2.6rem, 6vw, 3.4rem);
-  height: clamp(2.6rem, 6vw, 3.4rem);
+  width: clamp(3.6rem, 8vw, 5rem);
+  height: clamp(3.6rem, 8vw, 5rem);
 }
 
 .cat-card-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
   background: var(--surface-2);
   display: block;
 }
