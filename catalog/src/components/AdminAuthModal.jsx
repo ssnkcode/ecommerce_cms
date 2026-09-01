@@ -6,6 +6,7 @@ import {
   apiRegister,
   apiForgotPassword,
   apiResetPassword,
+  apiResendVerification,
   apiVerifyEmail,
 } from '../../../utils/api.js'
 
@@ -18,6 +19,7 @@ const VIEWS = {
   reset: 'reset',
   sent: 'sent',
   verify: 'verify',
+  resend: 'resend',
 }
 
 export default function AdminAuthModal({ onClose, initialView = 'login', initialToken = '' }) {
@@ -131,6 +133,25 @@ export default function AdminAuthModal({ onClose, initialView = 'login', initial
     }
   }
 
+  const submitResend = async (e) => {
+    e.preventDefault()
+    setError('')
+    if (!EMAIL_RE.test(email.trim())) {
+      setError('Ingresá un correo electrónico válido.')
+      return
+    }
+    setLoading(true)
+    const res = await apiResendVerification(email.trim())
+    setLoading(false)
+    if (res.ok) {
+      setInfo(res.data?.message || 'Te reenviamos el correo de confirmación.')
+      setDevLink(res.data?.devLink || '')
+      setView('sent')
+    } else {
+      setError(res.error || 'No se pudo reenviar el correo.')
+    }
+  }
+
   const submitReset = async (e) => {
     e.preventDefault()
     setError('')
@@ -154,7 +175,7 @@ export default function AdminAuthModal({ onClose, initialView = 'login', initial
   }
 
   const headIcon = (current) => {
-    if (current === 'register' || current === 'forgot' || current === 'sent') return 'mail'
+    if (current === 'register' || current === 'forgot' || current === 'sent' || current === 'resend') return 'mail'
     if (current === 'reset') return 'lock'
     return 'user'
   }
@@ -166,6 +187,7 @@ export default function AdminAuthModal({ onClose, initialView = 'login', initial
     reset: 'Crear contraseña nueva',
     sent: 'Revisá tu correo',
     verify: 'Confirmar correo',
+    resend: 'Reenviar verificación',
   }
 
   const icon = headIcon(view)
@@ -187,6 +209,7 @@ export default function AdminAuthModal({ onClose, initialView = 'login', initial
         {view === 'forgot' && 'Te enviamos un enlace a tu correo para crear una clave nueva.'}
         {view === 'reset' && 'Elegí tu nueva contraseña.'}
         {view === 'verify' && 'Confirmando tu correo...'}
+        {view === 'resend' && 'Ingresá tu correo para reenviar el enlace de confirmación.'}
         {view === 'sent' && 'El correo con el enlace ya debería estar llegando.'}
       </p>
     </div>
@@ -259,6 +282,9 @@ export default function AdminAuthModal({ onClose, initialView = 'login', initial
             <div className="auth-links">
               <button type="button" className="auth-link" onClick={() => switchView('forgot')}>
                 ¿Olvidaste tu contraseña?
+              </button>
+              <button type="button" className="auth-link" onClick={() => switchView('resend')}>
+                ¿No te llegó el correo de verificación?
               </button>
               <button type="button" className="auth-link" onClick={() => switchView('register')}>
                 Crear cuenta
@@ -362,6 +388,35 @@ export default function AdminAuthModal({ onClose, initialView = 'login', initial
               </button>
             </div>
           </div>
+        )}
+
+        {view === 'resend' && (
+          <form className="login-form" onSubmit={submitResend}>
+            <label className="login-field">
+              <span>Correo electrónico</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tucorreo@ejemplo.com"
+                autoFocus
+              />
+            </label>
+
+            {error && <p className="login-error">{error}</p>}
+
+            <div className="login-actions">
+              <button type="submit" className="btn-primary login-submit" disabled={loading}>
+                {loading ? 'Reenviando...' : 'Reenviar enlace'}
+              </button>
+            </div>
+
+            <div className="auth-links">
+              <button type="button" className="auth-link" onClick={() => switchView('login')}>
+                Volver al inicio de sesión
+              </button>
+            </div>
+          </form>
         )}
 
         {view === 'reset' && (

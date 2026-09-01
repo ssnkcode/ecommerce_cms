@@ -119,6 +119,13 @@ export async function apiVerifyEmail(token) {
   })
 }
 
+export async function apiResendVerification(email) {
+  return request('/api/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
 export async function apiForgotPassword(email) {
   return request('/api/auth/forgot-password', {
     method: 'POST',

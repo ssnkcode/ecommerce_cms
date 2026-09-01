@@ -118,6 +118,33 @@ router.post('/register', async (req, res, next) => {
   }
 })
 
+router.post('/resend-verification', async (req, res, next) => {
+  try {
+    const body = req.body && typeof req.body === 'object' ? req.body : {}
+    const email = typeof body.email === 'string' ? body.email.trim() : ''
+    if (!EMAIL_RE.test(email)) {
+      return res.status(400).json({ error: 'Ingresá un correo electrónico válido.' })
+    }
+
+    const admin = await getAdminByEmail(email)
+    // Respuesta uniforme para no revelar si el correo existe o ya está verificado.
+    if (!admin || admin.email_verified) {
+      return res.json({ ok: true, message: 'Si ese correo existe y está pendiente de confirmación, te lo reenviamos.' })
+    }
+
+    const token = randomToken()
+    await setAdminVerifyToken(admin.id, token, tokenExpiry(24))
+    const mail = await sendMail(buildVerificationEmail(email, token))
+    res.json({
+      ok: true,
+      message: `Te reenviamos el correo a ${email}. Revisá tu bandeja de entrada (y la de spam).`,
+      devLink: mail.dev ? mail.devLink : undefined,
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
 router.post('/verify-email', async (req, res, next) => {
   try {
     const { token } = req.body || {}
