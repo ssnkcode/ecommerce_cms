@@ -110,12 +110,14 @@ export default function CatalogApp() {
     if (status !== 'ready') return
     const baseUrl = window.location.origin + window.location.pathname
     const siteName = settings.siteName || 'SsnkCode'
+    // Imagen de metadatos = logo del catálogo.
+    const logoSrc = settings.logo && settings.logo.trim() ? settings.logo : '/assets/logo/logo.png'
     if (selected) {
       const pid = encodeURIComponent(String(selected.id))
       applySEO({
         title: `${selected.title} — ${siteName}`,
         description: selected.description || settings.tagline || `Conocé ${selected.title} en el catálogo de ${siteName}.`,
-        image: selected.image || (Array.isArray(selected.gallery) ? selected.gallery[0] : '') || settings.heroImage || DEFAULT_HERO_IMAGE,
+        image: logoSrc || selected.image || (Array.isArray(selected.gallery) ? selected.gallery[0] : '') || settings.heroImage || DEFAULT_HERO_IMAGE,
         url: `${baseUrl}#/producto/${pid}`,
         siteName,
       })
@@ -124,11 +126,24 @@ export default function CatalogApp() {
     applySEO({
       title: `${siteName} — Catálogo`,
       description: settings.tagline || `Catálogo digital de ${siteName}.`,
-      image: (products[0] || {}).image || settings.heroImage || DEFAULT_HERO_IMAGE,
+      image: logoSrc || (products[0] || {}).image || settings.heroImage || DEFAULT_HERO_IMAGE,
       url: baseUrl,
       siteName,
     })
   }, [settings, products, selected, status])
+
+  // Ícono de la pestaña del navegador = logo del catálogo.
+  useEffect(() => {
+    const logoSrc = settings.logo && settings.logo.trim() ? settings.logo : '/assets/logo/logo.png'
+    if (!logoSrc) return
+    let link = document.head.querySelector("link[rel='icon']")
+    if (!link) {
+      link = document.createElement('link')
+      link.rel = 'icon'
+      document.head.appendChild(link)
+    }
+    if (link.getAttribute('href') !== logoSrc) link.setAttribute('href', logoSrc)
+  }, [settings.logo])
 
   useEffect(() => {
     const onHash = () => {

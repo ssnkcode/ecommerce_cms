@@ -1476,6 +1476,34 @@ svg {
 .cat-add {
   margin-top: 0.7rem;
   width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Brillo que recorre el botón "Agregar al carrito" */
+.cat-add::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 45%;
+  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.55) 50%, transparent 75%);
+  transform: skewX(-20deg);
+  animation: brillitoCarrito 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes brillitoCarrito {
+  0% {
+    transform: translateX(0) skewX(-20deg);
+  }
+  55% {
+    transform: translateX(330%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(330%) skewX(-20deg);
+  }
 }
 
 /* ---------- Login modal ---------- */
