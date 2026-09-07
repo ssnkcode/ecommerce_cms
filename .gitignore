@@ -12,6 +12,7 @@ dist/
 .env.local
 .env.*.local
 backend/cms/.env
+deploy-secrets.json
 !.env.example
 
 # Logs

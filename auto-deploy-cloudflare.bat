@@ -10,9 +10,23 @@ echo.
 
 set "ROOT=%~dp0"
 
+REM URL de la API de PRODUCCION que usara este build (Vercel).
+REM Si cambias el backend de Vercel, actualiza este valor.
+set "VITE_API_URL=https://ecommerce-cms-kappa.vercel.app"
+
 cd /d "%ROOT%\cms"
 
-echo [1/3] Verificando dependencias del frontend...
+echo.
+echo [0/4] Sincronizando datos LOCALES a la base de produccion...
+call node "%ROOT%deploy-sync.mjs"
+if errorlevel 1 (
+    echo.
+    echo   [AVISO] No se pudieron sincronizar los datos locales.
+    echo           El deploy continua, pero la web mostrara lo que ya esta en produccion.
+)
+
+echo.
+echo [1/4] Verificando dependencias del frontend...
 if not exist "node_modules" (
     echo   Instalando dependencias...
     call npm install
@@ -25,7 +39,7 @@ if not exist "node_modules" (
 )
 
 echo.
-echo [2/3] Compilando el frontend (build)...
+echo [2/4] Compilando el frontend (build)...
 call npm run build
 if errorlevel 1 (
     echo.
@@ -35,7 +49,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [3/3] Desplegando en Cloudflare Pages (saska-shop)...
+echo [3/4] Desplegando en Cloudflare Pages (saska-shop)...
 call npx wrangler pages deploy "%ROOT%\cms\dist" --project-name=saska-shop
 if errorlevel 1 (
     echo.

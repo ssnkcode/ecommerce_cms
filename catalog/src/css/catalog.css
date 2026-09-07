@@ -104,6 +104,16 @@ svg {
   max-width: 160px;
   object-fit: contain;
   display: block;
+  animation: logoGirar 4s linear infinite;
+}
+
+@keyframes logoGirar {
+  from {
+    transform: perspective(600px) rotateY(0deg);
+  }
+  to {
+    transform: perspective(600px) rotateY(360deg);
+  }
 }
 
 .badge {
@@ -330,7 +340,7 @@ svg {
 }
 
 .catalog-hero h1 {
-  color: #000;
+  color: #e7e7e7;
   font-size: clamp(1.6rem, 7vw, 2.8rem);
   line-height: 1.15;
   margin-bottom: 1.4rem;
