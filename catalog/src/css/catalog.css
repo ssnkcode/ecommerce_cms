@@ -380,8 +380,8 @@ svg {
 /* ---------- Grid ---------- */
 .cat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
 }
 
 /* ---------- Cards ---------- */
@@ -417,7 +417,7 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: clamp(90px, 20vw, 110px);
+  height: clamp(200px, 20vw, 110px);
   aspect-ratio: 3 / 2;
   background: var(--surface-2);
   overflow: hidden;
@@ -965,7 +965,7 @@ svg {
 /* ---------- Skeleton de carga ---------- */
 .cat-skeleton-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -1057,7 +1057,7 @@ svg {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin: 0.9rem 20px 0.2rem;
+  margin: 0.9rem 0 0.2rem;
 }
 
 .cat-share-label {
@@ -1124,6 +1124,16 @@ svg {
 }
 
 /* ---------- Responsive ---------- */
+/* Celulares (desde 290px) y tablets: nombres largos truncados con puntos suspensivos */
+@media (max-width: 899px) {
+  .cat-card-body h3 {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 @media (min-width: 520px) {
   .cat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1521,6 +1531,35 @@ svg {
   border-color: var(--primary);
 }
 
+.pw-field {
+  position: relative;
+}
+
+.pw-field input {
+  width: 100%;
+  padding-right: 2.5rem;
+}
+
+.pw-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, var(--text));
+  cursor: pointer;
+  line-height: 0;
+}
+
+.pw-toggle:hover {
+  color: var(--primary);
+}
+
 .login-error {
   color: var(--danger);
   font-size: 0.85rem;
@@ -1543,6 +1582,56 @@ svg {
   flex: 1 1 auto;
   padding: 0.7rem 1.2rem;
   font-size: 0.95rem;
+}
+
+.auth-links {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  text-align: center;
+}
+
+.auth-link {
+  background: none;
+  border: none;
+  padding: 0.2rem;
+  color: var(--primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: opacity 0.2s;
+}
+
+.auth-link:hover {
+  opacity: 0.8;
+}
+
+.auth-sent {
+  display: grid;
+  gap: 1rem;
+}
+
+.login-ok {
+  color: var(--success);
+  font-size: 0.9rem;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.login-dev-link {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 0.7rem;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.login-dev-link a {
+  color: var(--primary);
+  text-decoration: underline;
 }
 
 /* ---------- Floating buttons ---------- */

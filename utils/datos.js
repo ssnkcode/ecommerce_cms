@@ -8,7 +8,7 @@ export const DEFAULT_HERO_IMAGE =
   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGlFWj7phFcPQyubvsKSoiy2fFvZaPpg1MAR8lerbgGg&s=10'
 export const WHATSAPP_NUMBER = '543541682310'
 export const WHATSAPP_FOOTER =
-  'SOLO SE RESERVA CON SEÑA DEL 50% PREVIA!\nSaludos desde polirrubroSSNK!!!'
+  'SOLO SE RESERVA CON SEÑA DEL 50% PREVIA!\nSaludos desde Saska-shop!!'
 
 export const defaultSettings = {
   siteName: 'SsnkCode',

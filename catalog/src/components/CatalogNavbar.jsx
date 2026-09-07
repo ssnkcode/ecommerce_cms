@@ -41,7 +41,6 @@ export default function CatalogNavbar({ settings, theme, onToggleTheme, onLogin,
           <img className="logo-img" src="/assets/logo/logo.png" alt={`${settings.siteName} logo`} style={logoHeight} />
         )}
         <span className="brand-name">{settings.siteName}</span>
-        <span className="badge">Catálogo</span>
       </div>
       <div className="catalog-actions">
         <button className="btn-catalog-link" onClick={onLogin}>

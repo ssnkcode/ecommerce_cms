@@ -8,6 +8,8 @@ const configDir = dirname(fileURLToPath(import.meta.url))
 const root = join(configDir, '..')
 const projectModules = join(configDir, 'node_modules')
 const assetsDir = join(root, 'assets')
+const outDir = join(configDir, 'dist')
+const publicDir = join(configDir, 'public')
 
 const pages = [
   ['Catálogo', 'catalog/catalog.html'],
@@ -48,17 +50,23 @@ const friendlyUrlsPlugin = {
 const copyAssetsPlugin = {
   name: 'copy-assets-to-dist',
   closeBundle() {
-    const outDir = join(root, 'dist')
     const target = join(outDir, 'assets')
     if (existsSync(assetsDir)) {
       mkdirSync(target, { recursive: true })
       cpSync(assetsDir, target, { recursive: true })
+    }
+    const catalogData = join(root, 'catalog', 'data.json')
+    const catalogOut = join(outDir, 'catalog')
+    if (existsSync(catalogData)) {
+      mkdirSync(catalogOut, { recursive: true })
+      cpSync(catalogData, join(catalogOut, 'data.json'))
     }
   },
 }
 
 export default defineConfig({
   root,
+  publicDir,
   plugins: [react(), copyAssetsPlugin, friendlyUrlsPlugin],
   resolve: {
     alias: {
@@ -77,6 +85,7 @@ export default defineConfig({
     },
   },
   build: {
+    outDir,
     rollupOptions: {
       input: {
         main: join(root, 'cms', 'index.html'),

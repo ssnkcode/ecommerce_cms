@@ -30,12 +30,13 @@ function ImageField({ label, value, onChange, placeholder, size, onSizeChange, s
   }
 
   const hasSizeControl = typeof size === 'number' && typeof onSizeChange === 'function'
+  const hasImage = !!(value && value.trim())
 
   return (
     <div className="image-field">
       <label className="image-field-label">{label}</label>
 
-      {(value && value.trim()) ? (
+      {hasImage && (
         <div className="image-preview">
           <img
             className="image-preview-img"
@@ -43,16 +44,10 @@ function ImageField({ label, value, onChange, placeholder, size, onSizeChange, s
             alt={label}
             style={hasSizeControl ? { height: `${size}px` } : undefined}
           />
-          <div className="image-preview-actions">
-            <button type="button" className="btn-cancel small" onClick={() => fileRef.current && fileRef.current.click()}>
-              Cambiar imagen
-            </button>
-            <button type="button" className="btn-cancel small danger" onClick={clear}>
-              Eliminar imagen
-            </button>
-          </div>
         </div>
-      ) : (
+      )}
+
+      {!hasImage && (
         <div className="image-dropzone">
           <span className="drop-ico" aria-hidden="true">
             <IconImage size={40} />
@@ -65,7 +60,7 @@ function ImageField({ label, value, onChange, placeholder, size, onSizeChange, s
         </div>
       )}
 
-      {!value?.trim() && (
+      {!hasImage && (
         <div className="image-url-row">
           <input
             type="url"
@@ -97,6 +92,25 @@ function ImageField({ label, value, onChange, placeholder, size, onSizeChange, s
               onChange={(e) => onSizeChange(Number(e.target.value) || 0)}
             />
           </div>
+        </div>
+      )}
+
+      {hasImage && (
+        <div className="image-preview-actions">
+          <button
+            type="button"
+            className="btn-icon-change"
+            onClick={() => fileRef.current && fileRef.current.click()}
+          >
+            Cambiar imagen
+          </button>
+          <button
+            type="button"
+            className="btn-icon-delete"
+            onClick={clear}
+          >
+            Eliminar imagen
+          </button>
         </div>
       )}
 

@@ -22,7 +22,7 @@ export default function ProductCard({ product, onOpen, onAdd }) {
       </div>
       <div className="cat-card-body">
         {product.category && <span className="cat-card-category">{product.category}</span>}
-        <h3>{product.title}</h3>
+        <h3 title={product.title}>{product.title}</h3>
         <p>{product.description}</p>
         <div className="cat-card-footer">
           <span className="cat-card-price">${formatPrice(product.price)}</span>

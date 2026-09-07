@@ -52,7 +52,7 @@ export default function AdminLoginModal({ onClose }) {
               type="text"
               value={user}
               onChange={(e) => setUser(e.target.value)}
-              placeholder="admin"
+                placeholder="usuario o correo"
               autoFocus
             />
           </label>

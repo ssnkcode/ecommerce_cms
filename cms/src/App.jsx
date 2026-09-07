@@ -6,7 +6,8 @@ import ExportModal from './components/ExportModal.jsx'
 import PreviewModal from './components/PreviewModal.jsx'
 import PrintSheet from './components/PrintSheet.jsx'
 import LoginModal from './components/LoginModal.jsx'
-import { readData, saveData, normalizeData, defaultProducts, defaultSettings, THEME_KEY, CATALOG_URL, WHATSAPP_NUMBER } from '../../utils/datos.js'
+import CredentialsModal from './components/CredentialsModal.jsx'
+import { readData, saveData, normalizeData, defaultProducts, defaultSettings, CATALOG_URL, WHATSAPP_NUMBER } from '../../utils/datos.js'
 import { checkApi, apiGetMe, apiFetchCatalog, apiSaveCatalog, apiLogout } from '../../utils/api.js'
 
 function loadLocal() {
@@ -32,10 +33,11 @@ function preloadImages(products) {
 }
 
 export default function App() {
-  const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || 'dark')
+  const [theme, setTheme] = useState('light')
   const [data, setData] = useState(loadLocal)
   const [session, setSession] = useState('checking')
   const [showLogin, setShowLogin] = useState(false)
+  const [showCredentials, setShowCredentials] = useState(false)
   const [syncToast, setSyncToast] = useState(null)
   const [exportChoice, setExportChoice] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -48,7 +50,6 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem(THEME_KEY, theme)
   }, [theme])
 
   useEffect(() => {
@@ -120,21 +121,27 @@ export default function App() {
     const run = async () => {
       inFlight = true
       const current = dataRef.current
-      if (apiOnlineRef.current) {
-        const res = await apiSaveCatalog({ settings: current.settings, products: current.products })
-        if (res && res._unauthorized) {
-          setSession(null)
-        } else if (res.ok) {
-          setSyncToast({ kind: 'ok', text: 'Sincronizado con el backend.' })
-        } else {
-          setSyncToast({ kind: 'err', text: 'No se pudo sincronizar: ' + (res.error || 'error') })
+      try {
+        if (apiOnlineRef.current) {
+          const res = await apiSaveCatalog({ settings: current.settings, products: current.products })
+          if (res && res._unauthorized) {
+            setSession(null)
+          } else if (res && res.ok) {
+            setSyncToast({ kind: 'ok', text: 'Sincronizado con el backend.' })
+          } else {
+            setSyncToast({ kind: 'err', text: 'No se pudo sincronizar: ' + ((res && res.error) || 'error de red') })
+          }
+          if (!res || !res._unauthorized) setTimeout(() => setSyncToast(null), 3500)
         }
-        if (!res || !res._unauthorized) setTimeout(() => setSyncToast(null), 2600)
-      }
-      inFlight = false
-      if (dirty) {
-        dirty = false
-        schedule()
+      } catch (e) {
+        setSyncToast({ kind: 'err', text: 'No se pudo sincronizar: ' + (e.message || 'error de red') })
+        setTimeout(() => setSyncToast(null), 3500)
+      } finally {
+        inFlight = false
+        if (dirty) {
+          dirty = false
+          schedule()
+        }
       }
     }
     const schedule = () => {
@@ -235,6 +242,10 @@ export default function App() {
         onToggleTheme={toggleTheme}
         onExport={() => setExportChoice(true)}
         onPreview={() => setPreviewOpen(true)}
+        session={session && session !== 'checking' ? session : null}
+        onLogin={() => setShowLogin(true)}
+        onLogout={doLogout}
+        onCredentials={() => setShowCredentials(true)}
       />
       <main id="contenido-principal" tabIndex={-1}>
         <Hero settings={settings} updateSettings={saveDataActions.updateSettings} />
@@ -288,6 +299,14 @@ export default function App() {
             apiGetMe().then((res) => setSession(res.ok ? { username: res.data && res.data.username } : null))
             apiOnlineRef.current = true
           }}
+        />
+      )}
+
+      {showCredentials && (
+        <CredentialsModal
+          currentUsername={session && session.username ? session.username : ''}
+          onClose={() => setShowCredentials(false)}
+          onSaved={(username) => setSession({ username })}
         />
       )}
 

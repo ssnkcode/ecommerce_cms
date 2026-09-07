@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
-import { IconCart, IconDownload, IconEye, IconSun, IconMoon, IconMenu, IconClose } from '../../../utils/icons.jsx'
+import { IconCart, IconDownload, IconEye, IconSun, IconMoon, IconMenu, IconClose, IconLock, IconLogout, IconUser } from '../../../utils/icons.jsx'
 import { useFocusTrap } from '../../../utils/a11y.jsx'
 
 function NavMenuPanel({ onClose, children }) {
@@ -31,8 +31,10 @@ function NavMenuPanel({ onClose, children }) {
   )
 }
 
-function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview }) {
+function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview, session, onLogin, onLogout, onCredentials }) {
   const [open, setOpen] = useState(false)
+
+  const userLabel = session && session.username ? session.username : ''
 
   return (
     <>
@@ -44,13 +46,11 @@ function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview }) {
             <img className="logo-img" src="/assets/logo/logo.png" alt={`${siteName} logo`} />
           )}
           <span className="site-name">{siteName}</span>
-          <span className="badge">CMS</span>
         </div>
 
         <div className="navbar-actions">
           <a className="btn-catalog-nav" href="/catalog/catalog.html" title="Ver la página del catálogo">
             <IconCart size={16} />
-            Catálogo
           </a>
           <button className="btn-preview-nav" onClick={onPreview} title="Vista previa en vivo del catálogo">
             <IconEye size={16} />
@@ -60,6 +60,23 @@ function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview }) {
             <IconDownload size={16} />
             Exportar catálogo
           </button>
+          {session ? (
+            <div className="nav-session">
+              <button className="nav-session-user" onClick={onCredentials} title="Cambiar usuario o contraseña">
+                <IconUser size={15} />
+                <span>{userLabel}</span>
+              </button>
+              <button className="nav-session-logout" onClick={onLogout} title="Cerrar sesión">
+                <IconLogout size={16} />
+                Salir
+              </button>
+            </div>
+          ) : (
+            <button className="nav-session-login" onClick={onLogin} title="Iniciar sesión para sincronizar con el backend">
+              <IconLock size={15} />
+              Entrar
+            </button>
+          )}
           <button
             className="theme-toggle"
             onClick={onToggleTheme}
@@ -116,6 +133,41 @@ function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview }) {
               <span>Exportar catálogo</span>
               <IconDownload size={18} />
             </button>
+            {session ? (
+              <>
+                <button
+                  className="nav-menu-item"
+                  onClick={() => {
+                    setOpen(false)
+                    onCredentials()
+                  }}
+                >
+                  <span>Cambiar usuario o contraseña</span>
+                  <IconUser size={18} />
+                </button>
+                <button
+                  className="nav-menu-item"
+                  onClick={() => {
+                    setOpen(false)
+                    onLogout()
+                  }}
+                >
+                  <span>Cerrar sesión ({userLabel})</span>
+                  <IconLogout size={18} />
+                </button>
+              </>
+            ) : (
+              <button
+                className="nav-menu-item"
+                onClick={() => {
+                  setOpen(false)
+                  onLogin()
+                }}
+              >
+                <span>Iniciar sesión</span>
+                <IconLock size={18} />
+              </button>
+            )}
             <button className="nav-menu-item" onClick={onToggleTheme}>
               <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
               {theme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}

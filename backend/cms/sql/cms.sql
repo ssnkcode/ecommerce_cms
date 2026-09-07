@@ -56,7 +56,7 @@ INSERT INTO cms_settings (key, value) VALUES
     ('logo',             '""'),
     ('logo_size',        '64'),
     ('whatsapp',         '"543541682310"'),
-    ('whatsapp_footer',  '"SOLO SE RESERVA CON SEÑA DEL 50% PREVIA!\nSaludos desde polirrubroSSNK!!!"')
+    ('whatsapp_footer',  '"SOLO SE RESERVA CON SEÑA DEL 50% PREVIA!\nSaludos desde Saska-shop!!!"')
 ON CONFLICT (key) DO NOTHING;
 
 -- ----------------------------------------------------------------------------

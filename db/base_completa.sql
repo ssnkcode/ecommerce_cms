@@ -20,7 +20,9 @@
 --  O creando la base manualmente una vez y luego:
 --      psql -U postgres -h localhost -d commerce_cms -f db/base_completa.sql
 --
---  Credenciales del admin inicial:  admin / admin123
+--  No se crea ningún usuario por defecto: el primer admin se registra desde el
+--  catálogo (botón ADMIN → Crear cuenta) o vía ADMIN_USER/ADMIN_PASSWORD en el
+--  entorno del backend.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -73,7 +75,7 @@ INSERT INTO cms_settings (key, value) VALUES
     ('logo',             '""'),
     ('logo_size',        '64'),
     ('whatsapp',         '"543541682310"'),
-    ('whatsapp_footer',  '"SOLO SE RESERVA CON SEÑA DEL 50% PREVIA!\nSaludos desde polirrubroSSNK!!!"'),
+    ('whatsapp_footer',  '"SOLO SE RESERVA CON SEÑA DEL 50% PREVIA!\nSaludos desde Saska-shop!!!"'),
     -- No mapeados por KEY_MAP (se guardan con el nombre JS que envía el CMS)
     ('categories',       '["Audio", "Vestibles", "Accesorios", "Pantallas"]'),
     ('pdfBusinessName',  '""'),
@@ -88,25 +90,38 @@ DELETE FROM cms_settings WHERE key = 'hero_subtitle';
 
 -- ----------------------------------------------------------------------------
 --  2) ADMINISTRADORES (cms_admins)
---     El hash bcrypt abajo corresponde a la contraseña: admin123
---     (generado con bcryptjs, la misma librería del backend).
+--     Usuarios del panel, con columnas para email, verificación y recuperación
+--     de contraseña. No se siembra ningún usuario por defecto (ver arriba).
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS cms_admins (
-    id            SERIAL PRIMARY KEY,
-    username      TEXT        NOT NULL UNIQUE,
-    password_hash TEXT        NOT NULL,
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+    id                   SERIAL PRIMARY KEY,
+    username             TEXT        NOT NULL UNIQUE,
+    password_hash        TEXT        NOT NULL,
+    email                TEXT        UNIQUE,
+    email_verified       BOOLEAN     NOT NULL DEFAULT FALSE,
+    verify_token         TEXT,
+    verify_token_expiry  TIMESTAMPTZ,
+    reset_token          TEXT,
+    reset_token_expiry   TIMESTAMPTZ,
+    created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Migración para bases existentes (idempotente).
+ALTER TABLE cms_admins ADD COLUMN IF NOT EXISTS email               TEXT;
+ALTER TABLE cms_admins ADD COLUMN IF NOT EXISTS email_verified      BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE cms_admins ADD COLUMN IF NOT EXISTS verify_token        TEXT;
+ALTER TABLE cms_admins ADD COLUMN IF NOT EXISTS verify_token_expiry TIMESTAMPTZ;
+ALTER TABLE cms_admins ADD COLUMN IF NOT EXISTS reset_token         TEXT;
+ALTER TABLE cms_admins ADD COLUMN IF NOT EXISTS reset_token_expiry  TIMESTAMPTZ;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cms_admins_email ON cms_admins (email) WHERE email IS NOT NULL;
 
 COMMENT ON TABLE cms_admins IS
     'Usuarios administradores del panel. La contraseña es un hash bcrypt (nunca texto plano).';
 
-INSERT INTO cms_admins (username, password_hash) VALUES
-    (
-        'admin',
-        '$2b$10$kkMc5503JoWTlW7RTbNUkeqX/s.TLSBa3XbSxbvUpICI4s/vaSA.a'
-    )
-ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash;
+-- NO se siembra ningún usuario por defecto. El primer administrador se crea
+-- desde el panel: botón ADMIN del catálogo → "Crear cuenta" (con verificación
+-- por correo), o bien vía ADMIN_USER/ADMIN_PASSWORD en el entorno del backend
+-- en despliegues automatizados.
 
 -- ----------------------------------------------------------------------------
 --  3) SESIONES (cms_sessions)
@@ -237,6 +252,5 @@ FROM (
 WHERE NOT EXISTS (SELECT 1 FROM products);
 
 -- ============================================================================
---  RESUMEN FINAL: 5 tablas creadas + seed de settings, admin y productos.
---  Credenciales del panel:  admin / admin123
+--  RESUMEN FINAL: 5 tablas creadas + seed de settings y productos (no de admin).
 -- ============================================================================

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { readData, readCart, saveCart, saveData, normalizeData, THEME_KEY, WHATSAPP_NUMBER, STORAGE_KEY, CATALOG_URL, DEFAULT_HERO_IMAGE } from '../utils/datos.js'
+import { readData, readCart, saveCart, saveData, normalizeData, WHATSAPP_NUMBER, STORAGE_KEY, CATALOG_URL, DEFAULT_HERO_IMAGE } from '../utils/datos.js'
 import { checkApi, apiFetchCatalog } from '../utils/api.js'
 import { applySEO } from '../utils/seo.jsx'
 import { IconBox } from '../utils/icons.jsx'
@@ -8,7 +8,7 @@ import CatalogHero from './src/components/CatalogHero.jsx'
 import ProductCard from './src/components/ProductCard.jsx'
 import ProductModal from './src/components/ProductModal.jsx'
 import CartDrawer from './src/components/CartDrawer.jsx'
-import AdminLoginModal from './src/components/AdminLoginModal.jsx'
+import AdminAuthModal from './src/components/AdminAuthModal.jsx'
 import FloatingButtons from './src/components/FloatingButtons.jsx'
 import CatalogToolbar from './src/components/CatalogToolbar.jsx'
 import ProductSkeleton from './src/components/ProductSkeleton.jsx'
@@ -16,11 +16,12 @@ import ProductSkeleton from './src/components/ProductSkeleton.jsx'
 const PAGE_SIZE = 12
 
 export default function CatalogApp() {
-  const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || 'dark')
+  const [theme, setTheme] = useState('light')
   const [data, setData] = useState(readData)
   const [status, setStatus] = useState(() => (data.products.length ? 'ready' : 'loading'))
   const [selected, setSelected] = useState(null)
   const [showLogin, setShowLogin] = useState(false)
+  const [authAction, setAuthAction] = useState(null)
   const [cart, setCart] = useState(readCart)
   const [cartOpen, setCartOpen] = useState(false)
   const [toast, setToast] = useState('')
@@ -130,10 +131,26 @@ export default function CatalogApp() {
   }, [settings, products, selected, status])
 
   useEffect(() => {
-    const onHash = () => setRouteTick((t) => t + 1)
+    const onHash = () => {
+      const hash = window.location.hash || ''
+      const verify = hash.match(/^#\/verificar\/(.+)$/)
+      const reset = hash.match(/^#\/recuperar\/(.+)$/)
+      if (verify) {
+        setAuthAction({ type: 'verify', token: decodeURIComponent(verify[1]) })
+      } else if (reset) {
+        setAuthAction({ type: 'reset', token: decodeURIComponent(reset[1]) })
+      } else {
+        setAuthAction(null)
+      }
+      setRouteTick((t) => t + 1)
+    }
     window.addEventListener('hashchange', onHash)
+    onHash()
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
+
+  const verifyToken = authAction?.type === 'verify' ? authAction.token : ''
+  const resetToken = authAction?.type === 'reset' ? authAction.token : ''
 
   useEffect(() => {
     if (status !== 'ready') return
@@ -291,7 +308,7 @@ export default function CatalogApp() {
 
       <footer className="footer">
         <p>
-          &copy; {new Date().getFullYear()} {settings.siteName} — Catálogo.
+          &copy; {new Date().getFullYear()} {settings.siteName}.
         </p>
         <p className="footer-cta">
           ¿Querés una página así?{' '}
@@ -309,7 +326,19 @@ export default function CatalogApp() {
       {selected && (
         <ProductModal product={selected} onClose={closeProduct} onAdd={addToCart} />
       )}
-      {showLogin && <AdminLoginModal onClose={() => setShowLogin(false)} />}
+      {showLogin && <AdminAuthModal onClose={() => setShowLogin(false)} />}
+      {(authAction?.type === 'verify' || authAction?.type === 'reset') && (
+        <AdminAuthModal
+          initialView={authAction.type}
+          initialToken={authAction.token}
+          onClose={() => {
+            setAuthAction(null)
+            if (window.location.hash) {
+              history.replaceState(null, '', window.location.pathname + window.location.search)
+            }
+          }}
+        />
+      )}
       {cartOpen && (
         <CartDrawer
           items={cart}
