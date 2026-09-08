@@ -304,6 +304,7 @@ button {
   background: var(--chrome-btn-bg);
   border-color: var(--chrome-btn-border);
   color: var(--chrome-text);
+  margin-right: 31px;
 }
 
 [data-theme='light'] .menu-toggle:hover {
