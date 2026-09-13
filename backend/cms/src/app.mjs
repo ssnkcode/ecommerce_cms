@@ -2,6 +2,9 @@ import 'dotenv/config'
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import { writeFile, access } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
 import { requireAuth } from './auth.mjs'
 import authRouter from './routes/auth.mjs'
 import settingsRouter from './routes/settings.mjs'
@@ -36,6 +39,27 @@ function buildAllowedOrigins() {
 
 const ALLOWED_ORIGIN = buildAllowedOrigins()
 
+// Ubicación del snapshot estático que consume el catálogo público.
+// Solo se escribe si existe (desarrollo local / build); en producción
+// (Vercel) no hay un directorio local y se ignora silenciosamente.
+const CATALOG_DATA_DEV = resolve(dirname(fileURLToPath(import.meta.url)), '../../../catalog/data.json')
+
+async function refreshStaticCatalog(data) {
+  try {
+    await access(CATALOG_DATA_DEV)
+    await writeFile(CATALOG_DATA_DEV, JSON.stringify(data, null, 2), 'utf8')
+  } catch {
+    // No existe el archivo estático: no hacer nada (hosting serverless).
+  }
+}
+
+async function catalogSnapshot() {
+  return {
+    settings: settingsFromRows(await getSettingsRows()),
+    products: (await listProducts()).map(productToJson),
+  }
+}
+
 function originAllowed(origin) {
   if (!origin) return false
   return ALLOWED_ORIGIN.some((re) => re.test(origin))
@@ -44,7 +68,7 @@ function originAllowed(origin) {
 const app = express()
 app.set('trust proxy', 1)
 
-app.use(express.json({ limit: '4.5mb' }))
+app.use(express.json({ limit: '30mb' }))
 app.use(cookieParser())
 app.use(
   cors({
@@ -62,7 +86,7 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/catalog', async (req, res, next) => {
   try {
-    res.json({ settings: settingsFromRows(await getSettingsRows()), products: (await listProducts()).map(productToJson) })
+    res.json(await catalogSnapshot())
   } catch (err) {
     next(err)
   }
@@ -81,7 +105,11 @@ app.put('/api/catalog', requireAuth, async (req, res, next) => {
     await upsertSettings(pairs)
     const prodList = Array.isArray(body.products) ? body.products : []
     await replaceProducts(prodList)
-    res.json({ settings: settingsFromRows(await getSettingsRows()), products: (await listProducts()).map(productToJson) })
+    // Regenera el data.json del catálogo público con lo recién guardado, para
+    // que hasta quien abre por primera vez (sin caché) vea lo último.
+    const snapshot = await catalogSnapshot()
+    res.json(snapshot)
+    refreshStaticCatalog(snapshot)
   } catch (err) {
     next(err)
   }

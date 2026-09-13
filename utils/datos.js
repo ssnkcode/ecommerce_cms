@@ -145,6 +145,32 @@ export function saveData(data) {
   }
 }
 
+// Caché SOLO lectura del catálogo público: guarda la última versión que sirvió
+// el backend para que la página muestre siempre eso al instante, en vez de
+// destellar un snapshot viejo de localStorage/data.json mientras espera la API.
+export const CATALOG_CACHE_KEY = 'commerce-cms-catalog-view'
+
+export function readCatalogCache() {
+  try {
+    const raw = localStorage.getItem(CATALOG_CACHE_KEY)
+    if (raw) return normalizeData(JSON.parse(raw))
+  } catch (e) {
+    console.error('Error leyendo caché de catálogo', e)
+  }
+  return null
+}
+
+export function saveCatalogCache(data) {
+  try {
+    localStorage.setItem(
+      CATALOG_CACHE_KEY,
+      JSON.stringify({ ...(data || {}), _version: SCHEMA_VERSION, _cachedAt: Date.now() }),
+    )
+  } catch (e) {
+    console.error('Error guardando caché de catálogo', e)
+  }
+}
+
 export function readCart() {
   try {
     const raw = localStorage.getItem(CART_KEY)

@@ -58,6 +58,34 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false
+    // Snapshot con el que arrancó la carga. Si al completarse el fetch remoto el
+    // usuario ya modificó algo, NO se pisa su edición (era la causa de que la
+    // categoría de un producto "volviera" sola unos instantes después).
+    const initialRef = { products: data.products, settings: data.settings }
+    const touched = () =>
+      dataRef.current.products !== initialRef.products || dataRef.current.settings !== initialRef.settings
+    const applyRemote = (catalog) => {
+      if (cancelled || !catalog || touched()) return
+      const normalized = normalizeData(catalog)
+      // No pisar lo local si contiene productos que la API aún no tiene (ej. un
+      // producto recién agregado que todavía no sincronizó): comparar por ID, no
+      // por cantidad (agregar y borrar a la vez deja el mismo total).
+      const current = dataRef.current
+      const apiIds = new Set((normalized.products || []).map((p) => p.id))
+      const localHasUnsynced = (current.products || []).some((p) => p.id != null && !apiIds.has(p.id))
+      if (localHasUnsynced) return
+      setData(normalized)
+      saveData(normalized)
+    }
+    const seedFromDeploy = () => {
+      if (cancelled) return Promise.resolve()
+      return fetch(CATALOG_URL)
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((c) => {
+          if (!cancelled && c && c.products) applyRemote(c)
+        })
+        .catch(() => {})
+    }
     checkApi()
       .then((online) => {
         apiOnlineRef.current = online
@@ -66,25 +94,16 @@ export default function App() {
           return apiFetchCatalog()
             .then((res) => {
               if (cancelled || !res.ok || !res.data) return
-              const catalog = res.data
-              setData(normalizeData(catalog))
-              saveData({ settings: catalog.settings, products: catalog.products })
+              applyRemote(res.data)
             })
             .catch(() => {
-              if (!cancelled) fetch(CATALOG_URL).then((r) => (r.ok ? r.json() : Promise.reject())).then((c) => c && c.products && setData(normalizeData(c))).catch(() => {})
+              if (!cancelled) seedFromDeploy()
             })
         }
-        return fetch(CATALOG_URL)
-          .then((r) => (r.ok ? r.json() : Promise.reject()))
-          .then((catalog) => {
-            if (cancelled || !catalog) return
-            if (catalog.products) setData(normalizeData(catalog))
-          })
-          .catch(() => {})
+        return seedFromDeploy()
       })
       .catch(() => {
-        if (!cancelled)
-          fetch(CATALOG_URL).then((r) => (r.ok ? r.json() : Promise.reject())).then((c) => c && c.products && setData(normalizeData(c))).catch(() => {})
+        if (!cancelled) seedFromDeploy()
       })
     return () => {
       cancelled = true
@@ -150,7 +169,7 @@ export default function App() {
         return
       }
       clearTimeout(timer)
-      timer = setTimeout(run, 700)
+      timer = setTimeout(run, 300)
     }
     const flush = () => {
       clearTimeout(timer)

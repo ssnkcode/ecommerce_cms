@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { readData, readCart, saveCart, saveData, normalizeData, WHATSAPP_NUMBER, STORAGE_KEY, CATALOG_URL, DEFAULT_HERO_IMAGE } from '../utils/datos.js'
+import { readData, readCart, saveCart, normalizeData, defaultSettings, readCatalogCache, saveCatalogCache, WHATSAPP_NUMBER, CATALOG_URL, DEFAULT_HERO_IMAGE } from '../utils/datos.js'
 import { checkApi, apiFetchCatalog } from '../utils/api.js'
 import { applySEO } from '../utils/seo.jsx'
 import { IconBox } from '../utils/icons.jsx'
@@ -15,9 +15,37 @@ import ProductSkeleton from './src/components/ProductSkeleton.jsx'
 
 const PAGE_SIZE = 12
 
+// Normaliza texto para búsqueda: minúsculas, sin tildes y con espacios simples.
+function normalizeSearchText(text) {
+  return (text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// Variantes de un término (singular/plural) para que "auriculares" encuentre
+// "AURICULAR", "balanzas" encuentre "BALANZA" y "mochilas" encuentre "MOCHILA".
+function searchVariants(term) {
+  const variants = [term]
+  if (term.length > 3 && term.endsWith('es')) variants.push(term.slice(0, -2))
+  if (term.length > 3 && term.endsWith('s') && !term.endsWith('es')) variants.push(term.slice(0, -1))
+  return variants
+}
+
 export default function CatalogApp() {
   const [theme, setTheme] = useState('light')
-  const [data, setData] = useState(readData)
+  // Orden de prioridad al abrir la página:
+  //   1. Lo que guardaste en el panel admin local (commerce-cms-data).
+  //   2. La última versión que sirvió el backend (caché propia).
+  //   3. Vacío (aparece el skeleton mientras llega el backend).
+  // Así lo que cargas localmente se ve SIEMPRE al instante, sin perder nada.
+  const [data, setData] = useState(() => {
+    const local = readData()
+    if (local.products.length) return local
+    return readCatalogCache() || { settings: { ...defaultSettings }, products: [] }
+  })
   const [status, setStatus] = useState(() => (data.products.length ? 'ready' : 'loading'))
   const [selected, setSelected] = useState(null)
   const [showLogin, setShowLogin] = useState(false)
@@ -30,6 +58,25 @@ export default function CatalogApp() {
   const [category, setCategory] = useState('all')
   const [visible, setVisible] = useState(PAGE_SIZE)
   const sentinelRef = useRef(null)
+  const dataRef = useRef(data)
+
+  useEffect(() => {
+    dataRef.current = data
+  }, [data])
+
+  // Fusiona lo que devuelve el backend con lo que haya en el localStorage del
+  // admin: si el backend NO tiene un producto que el usuario agregó localmente
+  // (aún sin sincronizar), NO lo pisa ni lo borra.
+  const mergeWithLocal = (remote) => {
+    const local = dataRef.current
+    const remoteProducts = Array.isArray(remote.products) ? remote.products : []
+    const localIds = new Set((local.products || []).map((p) => String(p.id)))
+    const missingLocally = remoteProducts.filter((p) => p.id != null && !localIds.has(String(p.id)))
+    return {
+      settings: { ...(local.settings || {}), ...(remote.settings || {}) },
+      products: [...(local.products || []), ...missingLocally],
+    }
+  }
 
   const { settings, products } = data
   const q = search.trim().toLowerCase()
@@ -50,27 +97,37 @@ export default function CatalogApp() {
 
   useEffect(() => {
     let mounted = true
-    const applyIfEmpty = (data) => {
-      setData((prev) => {
-        const current = readData()
-        return current.products.length ? prev : data
-      })
+    const commit = (d) => {
+      if (!mounted) return
+      setData(d)
+      saveCatalogCache(d)
+      setStatus('ready')
     }
-
+    // Fusiona lo que devuelve el backend con lo que haya en el localStorage del
+    // admin: si el backend NO tiene un producto que el usuario agregó localmente
+    // (aún sin sincronizar), NO lo pisa ni lo borra.
     const loadFallback = () => {
-      if (localStorage.getItem(STORAGE_KEY) != null) {
-        setStatus('ready')
+      const local = readData()
+      if (local.products.length) {
+        commit(local)
+        return
+      }
+      const cached = readCatalogCache()
+      if (cached && cached.products.length) {
+        commit(cached)
         return
       }
       fetch(CATALOG_URL)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((json) => {
-          if (mounted && json && Array.isArray(json.products) && json.products.length) {
-            applyIfEmpty(normalizeData(json))
+          if (!mounted) return
+          if (json && Array.isArray(json.products) && json.products.length) {
+            commit(normalizeData(json))
+          } else if (mounted) {
+            setStatus('ready')
           }
         })
-        .catch(() => {})
-        .finally(() => {
+        .catch(() => {
           if (mounted) setStatus('ready')
         })
     }
@@ -80,10 +137,7 @@ export default function CatalogApp() {
       .then((catalog) => {
         if (!mounted) return
         if (catalog && catalog.ok && catalog.data && Array.isArray(catalog.data.products)) {
-          const normalized = normalizeData(catalog.data)
-          setData(normalized)
-          saveData({ settings: normalized.settings, products: normalized.products })
-          setStatus('ready')
+          commit(normalizeData(mergeWithLocal(normalizeData(catalog.data))))
           return
         }
         loadFallback()
@@ -93,7 +147,27 @@ export default function CatalogApp() {
       })
   }, [])
 
-  const refresh = () => setData(readData())
+  const refresh = () => {
+    // Al volver a la pestaña: recarga desde el backend pero fusionando, para que
+    // un producto cargado sin sincronizar nunca desaparezca.
+    checkApi()
+      .then((online) => (online ? apiFetchCatalog() : null))
+      .then((catalog) => {
+        if (catalog && catalog.ok && catalog.data && Array.isArray(catalog.data.products)) {
+          const next = normalizeData(mergeWithLocal(normalizeData(catalog.data)))
+          setData(next)
+          saveCatalogCache(next)
+          setStatus('ready')
+        }
+      })
+      .catch(() => {
+        const cached = readCatalogCache()
+        if (cached && cached.products.length) {
+          setData(cached)
+          setStatus('ready')
+        }
+      })
+  }
 
   useEffect(() => {
     window.addEventListener('storage', refresh)
@@ -225,13 +299,12 @@ export default function CatalogApp() {
   }, [products, settings.categories])
 
   const filtered = useMemo(() => {
+    const terms = q ? normalizeSearchText(q).split(' ').filter(Boolean) : []
     return products.filter((p) => {
       if (category !== 'all' && p.category !== category) return false
-      if (!q) return true
-      return (
-        p.title.toLowerCase().includes(q) ||
-        (p.description || '').toLowerCase().includes(q)
-      )
+      if (!terms.length) return true
+      const hay = normalizeSearchText([p.title, p.description, p.category, p.specs].filter(Boolean).join(' '))
+      return terms.every((term) => searchVariants(term).some((v) => hay.includes(v)))
     })
   }, [products, category, q])
 

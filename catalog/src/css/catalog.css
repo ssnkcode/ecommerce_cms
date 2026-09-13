@@ -99,9 +99,9 @@ svg {
 }
 
 .logo-img {
-  height: 70px;
+  height: clamp(40px, 12vw, 70px);
   width: auto;
-  max-width: 160px;
+  max-width: clamp(80px, 25vw, 160px);
   object-fit: contain;
   display: block;
   animation: logoGirar 4s linear infinite;
@@ -295,7 +295,7 @@ svg {
   overflow: hidden;
   padding: clamp(2.5rem, 7vw, 5rem) clamp(1rem, 4vw, 2rem);
   text-align: center;
-  min-height: clamp(420px, 70vh, 700px);
+  min-height: clamp(320px, 70vh, 700px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -391,8 +391,9 @@ svg {
 /* ---------- Grid ---------- */
 .cat-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 1rem;
+  align-items: stretch;
 }
 
 /* ---------- Cards ---------- */
@@ -404,6 +405,8 @@ svg {
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
@@ -412,10 +415,6 @@ svg {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--shadow-card);
-}
-
-[data-theme='light'] .cat-card-emoji {
-  background: var(--card-media-bg);
 }
 
 .cat-card:hover {
@@ -428,9 +427,10 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: clamp(200px, 20vw, 110px);
-  aspect-ratio: 3 / 2;
-  background: var(--surface-2);
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  flex: 0 0 auto;
+  background: #ffffff;
   overflow: hidden;
 }
 
@@ -440,10 +440,16 @@ svg {
 }
 
 .cat-card-img {
-  width: 100%;
+  width: 75%;
   height: 100%;
-  object-fit: contain;
-  background: var(--surface-2);
+  background: #ffffff;
+  display: block;
+}
+
+.cat-card.width_1 .cat-card-img {
+  width: 48%;
+  height: 100%;
+  background: #ffffff;
   display: block;
 }
 
@@ -483,6 +489,13 @@ svg {
   font-size: 0.9rem;
   overflow-wrap: break-word;
   flex: 1;
+  min-height: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* Respaldo para motores sin -webkit-line-clamp: máximo 2 líneas (~2.6em) */
+  max-height: 2.6em;
 }
 
 .cat-card-footer {
@@ -658,8 +671,8 @@ svg {
   border-radius: 14px;
   overflow: hidden;
   width: 100%;
-  height: 260px;
-  min-height: 260px;
+  height: clamp(180px, 50vw, 260px);
+  min-height: clamp(180px, 50vw, 260px);
 }
 
 .cat-gallery-main-img {
@@ -705,8 +718,8 @@ svg {
 }
 
 .cat-gallery-thumb {
-  width: 56px;
-  height: 56px;
+  width: clamp(40px, 12vw, 56px);
+  height: clamp(40px, 12vw, 56px);
   border-radius: 10px;
   overflow: hidden;
   border: 2px solid var(--border);
@@ -976,7 +989,7 @@ svg {
 /* ---------- Skeleton de carga ---------- */
 .cat-skeleton-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 
@@ -1068,7 +1081,7 @@ svg {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin: 0.9rem 0 0.2rem;
+  margin: 0.9rem 22px 0.2rem;
 }
 
 .cat-share-label {
@@ -1160,6 +1173,39 @@ svg {
 @media (min-width: 1200px) {
   .cat-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Pantallas ultranas / monitores grandes */
+@media (min-width: 1600px) {
+  .catalog-main {
+    max-width: 1440px;
+  }
+  .cat-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .catalog-hero {
+    min-height: clamp(320px, 60vh, 640px);
+  }
+}
+
+@media (min-width: 2100px) {
+  .catalog-main {
+    max-width: 1820px;
+  }
+  .cat-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* Pantallas muy bajas: el hero y los modales hermanos se adaptan al alto */
+@media (max-height: 640px) and (min-width: 520px) {
+  .catalog-hero {
+    min-height: auto;
+    padding: clamp(1.6rem, 5vw, 2.5rem) clamp(1rem, 4vw, 2rem);
+  }
+  .cat-modal {
+    max-height: 92vh;
   }
 }
 
@@ -1309,9 +1355,9 @@ svg {
 }
 
 .cart-item-emoji {
-  width: 54px;
-  height: 54px;
-  min-width: 54px;
+  width: clamp(40px, 14vw, 54px);
+  height: clamp(40px, 14vw, 54px);
+  min-width: clamp(40px, 14vw, 54px);
   border-radius: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1685,8 +1731,8 @@ svg {
 }
 
 .float-btn {
-  width: 56px;
-  height: 56px;
+  width: clamp(44px, 15vw, 56px);
+  height: clamp(44px, 15vw, 56px);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1744,4 +1790,143 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* =========================================================
+   SMALL SCREENS (290px – 360px)
+   ========================================================= */
+
+@media (max-width: 540px) {
+  .cat-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .cat-card-footer .btn-primary,
+  .cat-card-footer .btn-secondary {
+    width: 100%;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .cat-card-footer .cat-card-price {
+    text-align: center;
+  }
+}
+
+@media (max-width: 360px) {
+  .catalog-nav {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .catalog-brand {
+    gap: 0.35rem;
+    font-size: 0.85rem;
+  }
+
+  .catalog-hero {
+    min-height: clamp(280px, 70vh, 600px);
+    padding: clamp(1.8rem, 5vw, 3rem) clamp(0.8rem, 3vw, 1.5rem);
+  }
+
+  .catalog-hero h1 {
+    font-size: clamp(1.3rem, 6vw, 2rem);
+  }
+
+  .catalog-hero p {
+    font-size: 0.85rem;
+  }
+
+  .catalog-main {
+    padding: clamp(1.2rem, 4vw, 2rem) clamp(0.7rem, 3vw, 1.2rem) clamp(2rem, 5vw, 3rem);
+  }
+
+  .cat-card-body {
+    padding: 0.7rem 0.8rem 0.8rem;
+  }
+
+  .cat-card-body h3 {
+    font-size: 0.95rem;
+  }
+
+  .cat-modal {
+    max-width: 100%;
+    border-radius: 14px;
+  }
+
+  .cat-modal-head {
+    padding: 1rem 1rem 0.4rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cat-modal-body {
+    padding: 0.7rem 1rem;
+  }
+
+  .cat-modal-actions {
+    padding: 0.5rem 1rem 1rem;
+    flex-direction: column;
+  }
+
+  .cat-modal-actions .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+
+  .cat-gallery-main {
+    height: clamp(160px, 60vw, 220px);
+    min-height: clamp(160px, 60vw, 220px);
+  }
+
+  .cat-gallery {
+    padding: 0 1rem 0.4rem;
+  }
+
+  .cart-drawer {
+    width: 100%;
+  }
+
+  .cart-header {
+    padding: 0.8rem 1rem;
+  }
+
+  .cart-items {
+    padding: 0.8rem 1rem;
+  }
+
+  .cart-footer {
+    padding: 0.8rem 1rem;
+  }
+
+  .cat-toolbar {
+    margin-bottom: 1rem;
+  }
+
+  .cat-chip {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.78rem;
+  }
+
+  .cat-search input {
+    padding: 0.6rem 2rem 0.6rem 2.2rem;
+    font-size: 0.88rem;
+  }
+
+  .floating-buttons {
+    bottom: 1rem;
+    right: 1rem;
+    gap: 0.6rem;
+  }
+
+  .cat-share-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .cat-share-btn svg {
+    width: 16px;
+    height: 16px;
+  }
 }

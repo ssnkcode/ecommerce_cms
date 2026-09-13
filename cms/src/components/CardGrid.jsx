@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { CategoryIcon, IconTag, IconCheck, IconPencil, IconTrash, IconClose, IconImage, IconUpload, IconPlus, IconRestore } from '../../../utils/icons.jsx'
+import { useMemo, useRef, useState } from 'react'
+import { CategoryIcon, IconTag, IconCheck, IconPencil, IconTrash, IconClose, IconImage, IconUpload, IconPlus, IconRestore, IconSearch } from '../../../utils/icons.jsx'
 import { processImageFile as compressImageFile } from '../../../utils/images.js'
 import { useFocusTrap } from '../../../utils/a11y.jsx'
 
@@ -16,8 +16,10 @@ function parsePriceInput(raw) {
   // Si hay coma, se la toma como separador decimal y los puntos como miles.
   if (lastComma > -1) {
     s = s.replace(/\./g, '').replace(',', '.')
-  } else if (lastDot > -1 && s.indexOf('.') !== s.lastIndexOf('.')) {
-    // Varios puntos y sin coma: todos son separadores de miles.
+  } else if (lastDot > -1 && (s.indexOf('.') < lastDot || /^\d{3}$/.test(s.slice(lastDot + 1)))) {
+    // Sin coma, el punto es separador de miles cuando hay varios (1.200.000)
+    // o un único punto con exactamente 3 dígitos después (48.000 -> 48000).
+    // Un único punto con otra cantidad queda como decimal (1.5).
     s = s.replace(/\./g, '')
   }
   const n = Number(s)
@@ -73,7 +75,7 @@ function ProductCard({ product, onEdit, onRemove }) {
         <button className="icon-btn" title="Editar" aria-label="Editar" onClick={() => onEdit(product)}>
           <IconPencil size={16} />
         </button>
-        <button className="icon-btn danger" title="Eliminar" aria-label="Eliminar" onClick={() => onRemove(product.id)}>
+        <button className="icon-btn danger" title="Eliminar" aria-label="Eliminar" onClick={() => onRemove(product)}>
           <IconTrash size={16} />
         </button>
       </div>
@@ -102,7 +104,7 @@ function ProductForm({ initial, categories, onSave, onCancel }) {
   const urlBusyRef = useRef(false)
   const fileInputRef = useRef(null)
   const galleryInputRef = useRef(null)
-  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
   const processImageFile = (file, callback) => {
     compressImageFile(file, { maxSize: 1200, quality: 0.82 })
@@ -257,13 +259,13 @@ function ProductForm({ initial, categories, onSave, onCancel }) {
             placeholder="https://ejemplo.com/producto.jpg"
             onChange={(e) => {
               setUrlInput(e.target.value)
-              setForm({ ...form, image: e.target.value })
+              setForm((f) => ({ ...f, image: e.target.value }))
             }}
           />
         </label>
 
         {form.image && form.image.trim() && (
-          <button type="button" className="btn-remove-image" onClick={() => setForm({ ...form, image: '' })}>
+          <button type="button" className="btn-remove-image" onClick={() => setForm((f) => ({ ...f, image: '' }))}>
             <IconTrash size={14} />
             Quitar imagen
           </button>
@@ -641,13 +643,35 @@ function CardGrid({
   const [mode, setMode] = useState(null)
   const [editingProduct, setEditingProduct] = useState(null)
   const [confirmAction, setConfirmAction] = useState(null)
+  const [confirmProduct, setConfirmProduct] = useState(null)
   const [catManager, setCatManager] = useState(false)
+  const [search, setSearch] = useState('')
   const resetBoxRef = useRef(null)
   const clearBoxRef = useRef(null)
+  const removeBoxRef = useRef(null)
   const catBoxRef = useRef(null)
   useFocusTrap(resetBoxRef, { onEscape: () => setConfirmAction(null) })
   useFocusTrap(clearBoxRef, { onEscape: () => setConfirmAction(null) })
+  useFocusTrap(removeBoxRef, { onEscape: () => setConfirmProduct(null) })
   useFocusTrap(catBoxRef, { onEscape: () => setCatManager(false) })
+
+  // Filtro por nombre (ignora tildes y mayúsculas) para ubicar productos rápido.
+  const normalizeText = (t) =>
+    String(t || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+  const filteredProducts = useMemo(() => {
+    const q = normalizeText(search.trim())
+    if (!q) return products
+    const matches = products.filter((p) => normalizeText(p.title).includes(q))
+    // Si se está editando un producto que no matchea el filtro, igual se muestra
+    // para que el formulario de edición nunca desaparezca a mitad de camino.
+    if (editingProduct && !matches.some((p) => p.id === editingProduct.id)) {
+      return [...matches, editingProduct]
+    }
+    return matches
+  }, [products, search, editingProduct])
 
   const startAdd = () => {
     setEditingProduct(emptyProduct)
@@ -661,6 +685,13 @@ function CardGrid({
 
   const handleSave = (data) => {
     const payload = { ...data, price: parsePriceInput(data.price) }
+    // Autocorrección: si un precio (solo número) quedó en el campo Categoría y el
+    // precio quedó vacío, se devuelve el precio a su campo.
+    const catText = String(payload.category == null ? '' : payload.category).replace(/\s/g, '')
+    if (catText && /^[\d.,]+$/.test(catText) && (!payload.price || payload.price === 0)) {
+      payload.price = parsePriceInput(payload.category)
+      payload.category = ''
+    }
     if (mode === 'add') addProduct(payload)
     else updateProduct(editingProduct.id, payload)
     setMode(null)
@@ -712,22 +743,94 @@ function CardGrid({
         />
       )}
 
-      <div className="card-grid">
-        {products.map((p) =>
-          mode === 'edit' && editingProduct.id === p.id ? (
-            <div key={p.id} className="card-edit-wrap">
-              <ProductForm
-                initial={editingProduct}
-                categories={categories}
-                onSave={handleSave}
-                onCancel={() => { setMode(null); setEditingProduct(null) }}
-              />
-            </div>
-          ) : (
-            <ProductCard key={p.id} product={p} onEdit={startEdit} onRemove={removeProduct} />
-          ),
+      <div className="card-search">
+        <IconSearch size={16} />
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Filtrar productos por nombre…"
+          aria-label="Filtrar productos por nombre"
+        />
+        {search && (
+          <button
+            type="button"
+            className="card-search-clear"
+            onClick={() => setSearch('')}
+            title="Limpiar filtro"
+            aria-label="Limpiar filtro"
+          >
+            <IconClose size={16} />
+          </button>
+        )}
+        {search.trim() && (
+          <span className="card-search-count">
+            {filteredProducts.length} de {products.length}
+          </span>
         )}
       </div>
+
+      {search.trim() && filteredProducts.length === 0 ? (
+        <div className="card-search-empty">
+          No se encontraron productos que coincidan con <strong>"{search.trim()}"</strong>.
+        </div>
+      ) : (
+        <div className="card-grid">
+          {filteredProducts.map((p) =>
+            mode === 'edit' && editingProduct.id === p.id ? (
+              <div key={p.id} className="card-edit-wrap">
+                <ProductForm
+                  initial={editingProduct}
+                  categories={categories}
+                  onSave={handleSave}
+                  onCancel={() => { setMode(null); setEditingProduct(null) }}
+                />
+              </div>
+            ) : (
+              <ProductCard
+                key={p.id}
+                product={p}
+                onEdit={startEdit}
+                onRemove={(product) => setConfirmProduct(product)}
+              />
+            ),
+          )}
+        </div>
+      )}
+
+      {confirmProduct && (
+        <div className="confirm-overlay" onClick={() => setConfirmProduct(null)}>
+          <div
+            className="confirm-box"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-title"
+            ref={removeBoxRef}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h4 id="confirm-title">¿Eliminar producto?</h4>
+            <p>
+              Se va a eliminar <strong>"{confirmProduct.title}"</strong> del catálogo. Esta acción no
+              se puede deshacer.
+            </p>
+            <div className="confirm-actions">
+              <button type="button" className="btn-cancel" onClick={() => setConfirmProduct(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={() => {
+                  removeProduct(confirmProduct.id)
+                  setConfirmProduct(null)
+                }}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {confirmAction === 'reset' && (
         <div className="confirm-overlay" onClick={() => setConfirmAction(null)}>

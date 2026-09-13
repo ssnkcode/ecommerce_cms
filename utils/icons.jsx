@@ -65,6 +65,13 @@ export const IconEye = (props) => (
   </Svg>
 )
 
+export const IconSearch = (props) => (
+  <Svg {...props}>
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </Svg>
+)
+
 export const IconEyeOff = (props) => (
   <Svg {...props}>
     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 4.06-5.94" />

@@ -50,16 +50,28 @@ const friendlyUrlsPlugin = {
 const copyAssetsPlugin = {
   name: 'copy-assets-to-dist',
   closeBundle() {
+    // assets/ completo (logo, hero, imagenes de productos, etc.)
     const target = join(outDir, 'assets')
     if (existsSync(assetsDir)) {
       mkdirSync(target, { recursive: true })
       cpSync(assetsDir, target, { recursive: true })
     }
-    const catalogData = join(root, 'catalog', 'data.json')
+    // Contenido estático del catálogo: data.json (ya existía), favicon.svg y
+    // cualquier archivo de catalog/assets/ que el usuario agregue.
     const catalogOut = join(outDir, 'catalog')
-    if (existsSync(catalogData)) {
-      mkdirSync(catalogOut, { recursive: true })
-      cpSync(catalogData, join(catalogOut, 'data.json'))
+    const catalogData = join(root, 'catalog', 'data.json')
+    const catalogFavicon = join(root, 'catalog', 'favicon.svg')
+    const catalogAssets = join(root, 'catalog', 'assets')
+    mkdirSync(catalogOut, { recursive: true })
+    if (existsSync(catalogData)) cpSync(catalogData, join(catalogOut, 'data.json'))
+    if (existsSync(catalogFavicon)) cpSync(catalogFavicon, join(catalogOut, 'favicon.svg'))
+    if (existsSync(catalogAssets)) cpSync(catalogAssets, join(catalogOut, 'assets'), { recursive: true })
+    // public/ : TODO lo que el usuario deje en D:\upc\cms\public\ se despliega
+    // tal cual en la web (imagenes, pdfs, archivos propios, etc.).
+    const publicRoot = join(root, 'public')
+    if (existsSync(publicRoot)) {
+      mkdirSync(outDir, { recursive: true })
+      cpSync(publicRoot, outDir, { recursive: true })
     }
   },
 }

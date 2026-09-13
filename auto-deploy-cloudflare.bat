@@ -50,7 +50,7 @@ if errorlevel 1 (
 
 echo.
 echo [3/4] Desplegando en Cloudflare Pages (saska-shop)...
-call npx wrangler pages deploy "%ROOT%\cms\dist" --project-name=saska-shop
+call npx wrangler pages deploy "%ROOT%\cms\dist" --project-name=saska-shop --commit-dirty=true
 if errorlevel 1 (
     echo.
     echo [ERROR] Fallo el despliegue.
