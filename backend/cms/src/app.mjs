@@ -115,6 +115,16 @@ app.put('/api/catalog', requireAuth, async (req, res, next) => {
   }
 })
 
+app.post('/api/export-json', requireAuth, async (req, res, next) => {
+  try {
+    const snapshot = await catalogSnapshot()
+    await writeFile(CATALOG_DATA_DEV, JSON.stringify(snapshot, null, 2), 'utf8')
+    res.json({ ok: true })
+  } catch (err) {
+    next(err)
+  }
+})
+
 app.use('/api/auth', authRouter)
 app.use('/api/settings', requireAuth, settingsRouter)
 app.use('/api/products', requireAuth, productsRouter)

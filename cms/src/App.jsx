@@ -8,7 +8,7 @@ import PrintSheet from './components/PrintSheet.jsx'
 import LoginModal from './components/LoginModal.jsx'
 import CredentialsModal from './components/CredentialsModal.jsx'
 import { readData, saveData, normalizeData, defaultProducts, defaultSettings, CATALOG_URL, WHATSAPP_NUMBER } from '../../utils/datos.js'
-import { checkApi, apiGetMe, apiFetchCatalog, apiSaveCatalog, apiLogout } from '../../utils/api.js'
+import { checkApi, apiGetMe, apiFetchCatalog, apiSaveCatalog, apiLogout, apiExportJson } from '../../utils/api.js'
 
 function loadLocal() {
   const data = readData()
@@ -218,6 +218,25 @@ export default function App() {
     setExportChoice(false)
   }
 
+  const handleGenerateJson = async () => {
+    if (!session) {
+      setSyncToast({ kind: 'err', text: 'Iniciá sesión para generar el JSON.' })
+      setTimeout(() => setSyncToast(null), 3500)
+      return
+    }
+    try {
+      const res = await apiExportJson()
+      if (res && res.ok) {
+        setSyncToast({ kind: 'ok', text: 'JSON regenerado en catalog/data.json.' })
+      } else {
+        setSyncToast({ kind: 'err', text: 'No se pudo generar el JSON: ' + ((res && res.error) || 'error de red') })
+      }
+    } catch (e) {
+      setSyncToast({ kind: 'err', text: 'No se pudo generar el JSON: ' + (e.message || 'error de red') })
+    }
+    setTimeout(() => setSyncToast(null), 3500)
+  }
+
   const handleExportPdf = async () => {
     setExportChoice(false)
     setPrintState({})
@@ -260,6 +279,7 @@ export default function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
         onExport={() => setExportChoice(true)}
+        onGenerateJson={handleGenerateJson}
         onPreview={() => setPreviewOpen(true)}
         session={session && session !== 'checking' ? session : null}
         onLogin={() => setShowLogin(true)}

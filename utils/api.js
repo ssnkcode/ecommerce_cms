@@ -175,6 +175,10 @@ export async function apiSaveCatalog({ settings, products }) {
   })
 }
 
+export async function apiExportJson() {
+  return request('/api/export-json', { method: 'POST' })
+}
+
 export async function apiGetSettings() {
   const res = await request('/api/settings')
   if (!res.ok) throw new Error(res.error || 'No se pudieron obtener los ajustes')

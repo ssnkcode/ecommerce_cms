@@ -43,9 +43,11 @@ export default function CatalogNavbar({ settings, theme, onToggleTheme, onLogin,
         <span className="brand-name">{settings.siteName}</span>
       </div>
       <div className="catalog-actions">
+        {/* ADMIN: botón oculto por ahora, solo catálogo público
         <button className="btn-catalog-link" onClick={onLogin}>
           ADMIN
         </button>
+        */}
         <button className="cart-toggle" onClick={onOpenCart} aria-label="Abrir carrito">
           <IconCart size={20} />
           {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
@@ -71,6 +73,7 @@ export default function CatalogNavbar({ settings, theme, onToggleTheme, onLogin,
       </button>
       {open && (
         <NavMenuPanel onClose={() => setOpen(false)}>
+          {/* ADMIN: menú de administración oculto por ahora
           <button
             className="nav-menu-item"
             onClick={() => {
@@ -81,6 +84,7 @@ export default function CatalogNavbar({ settings, theme, onToggleTheme, onLogin,
             <span>Administración</span>
             <IconLock size={18} />
           </button>
+          */}
           <button
             className="nav-menu-item"
             onClick={() => {

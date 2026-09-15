@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
-import { IconCart, IconDownload, IconEye, IconSun, IconMoon, IconMenu, IconClose, IconLock, IconLogout, IconUser } from '../../../utils/icons.jsx'
+import { IconCart, IconDownload, IconEye, IconSun, IconMoon, IconMenu, IconClose, IconLock, IconLogout, IconUser, IconFileJson } from '../../../utils/icons.jsx'
 import { useFocusTrap } from '../../../utils/a11y.jsx'
 
 function NavMenuPanel({ onClose, children }) {
@@ -31,7 +31,7 @@ function NavMenuPanel({ onClose, children }) {
   )
 }
 
-function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview, session, onLogin, onLogout, onCredentials }) {
+function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onGenerateJson, onPreview, session, onLogin, onLogout, onCredentials }) {
   const [open, setOpen] = useState(false)
 
   const userLabel = session && session.username ? session.username : ''
@@ -60,6 +60,12 @@ function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview, ses
             <IconDownload size={16} />
             Exportar catálogo
           </button>
+          {session ? (
+            <button className="btn-export" onClick={onGenerateJson} title="Regenerar catalog/data.json desde la base local">
+              <IconFileJson size={16} />
+              Generar JSON
+            </button>
+          ) : null}
           {session ? (
             <div className="nav-session">
               <button className="nav-session-user" onClick={onCredentials} title="Cambiar usuario o contraseña">
@@ -133,6 +139,18 @@ function Navbar({ siteName, logo, theme, onToggleTheme, onExport, onPreview, ses
               <span>Exportar catálogo</span>
               <IconDownload size={18} />
             </button>
+            {session ? (
+              <button
+                className="nav-menu-item"
+                onClick={() => {
+                  setOpen(false)
+                  onGenerateJson()
+                }}
+              >
+                <span>Generar JSON</span>
+                <IconFileJson size={18} />
+              </button>
+            ) : null}
             {session ? (
               <>
                 <button

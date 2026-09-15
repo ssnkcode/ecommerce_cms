@@ -1,0 +1,1 @@
+crea una carpeta con este nombre deploy_solo_cloudflare y dento de ella un nuevo archivo que se llama deploy_solo_cloudflare.bat que va a apuntar a catalog/ para desplegar el nuevo front con data.json acrtualizado

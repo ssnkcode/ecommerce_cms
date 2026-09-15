@@ -140,23 +140,39 @@ echo       Salida lista en %ROOT%dist
 REM ----------------------------------------------------------------------------
 REM 6) Desplegar en Cloudflare Pages
 REM ----------------------------------------------------------------------------
+set "DEPLOY_LOG=%ROOT%.deploy-log.txt"
 echo.
 echo [5/5] Desplegando en Cloudflare Pages (saska-shop)...
-call npx wrangler pages deploy "%ROOT%dist" --project-name=saska-shop --commit-dirty=true
-if errorlevel 1 (
+call npx wrangler pages deploy "%ROOT%dist" --project-name=saska-shop --commit-dirty=true > "%DEPLOY_LOG%" 2>&1
+set "deploy_rc=%errorlevel%"
+
+if exist "%DEPLOY_LOG%" (
+    type "%DEPLOY_LOG%"
     echo.
-    echo [ERROR] Fallo el despliegue en Cloudflare Pages.
-    echo         Revisa la salida de wrangler de arriba (login / permisos / red).
-    echo ============================================================
-) else (
-    echo.
-    echo ============================================================
-    echo   DESPLIEGUE EXITOSO
-    echo   https://saska-shop.pages.dev/
-    echo ============================================================
 )
 
+if not "%deploy_rc%"=="0" (
+    echo ============================================================
+    echo   [ERROR] Fallo el despliegue en Cloudflare Pages.
+    echo   Revisa la salida de wrangler de arriba: login, permisos o red.
+    echo ============================================================
+    goto :fin
+)
+
+echo ============================================================
+echo   DESPLIEGUE EXITOSO: el catalogo se subio correctamente.
+echo ============================================================
+set "SITE_URL="
+for /f "usebackq delims=" %%u in (`powershell -NoProfile -Command "$t = Get-Content -LiteralPath '%DEPLOY_LOG%' -Raw; if ($t -match 'https://[A-Za-z0-9_.-]+\.pages\.dev') { $matches[0] }"`) do set "SITE_URL=%%u"
+if not defined SITE_URL set "SITE_URL=https://saska-shop.pages.dev/"
+echo.
+echo   Pagina publicada en: %SITE_URL%
+echo ============================================================
+
+if exist "%DEPLOY_LOG%" del "%DEPLOY_LOG%" >nul 2>&1
+
+:fin
 echo.
 echo  Presiona una tecla para cerrar...
-pause
+pause >nul
 endlocal

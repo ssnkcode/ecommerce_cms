@@ -52,3 +52,7 @@ Crear una función que reciba como parámetros:
    - Verificar que se guarda con el nombre del producto y la resolución correcta.
    - Verificar la carpeta por defecto `assets` y la carpeta personalizada.
    - Verificar que la imagen queda asignada automáticamente al producto en el catálogo.
+
+
+
+Continue  opencode -s ses_f5f60a2b7ffePU4k9GWRb6ZqfV
